@@ -6,6 +6,8 @@ import (
 	"reflect"
 )
 
+const TagVarname = "varname"
+
 var ErrFieldDoesNotExist = errors.New("dialect: field does not exist")
 
 type Dialect struct {
@@ -15,15 +17,18 @@ type Dialect struct {
 
 	//Types.
 
-	Int  string
-	UUID string
+	Int  string `varname:"Int"`
+	UUID string `varname:"UUID"`
 }
 
-func (d *Dialect) ValueOfField(name string) (string, error) {
+func (d *Dialect) ValueOfVariableField(varname string) (string, error) {
 	value := reflect.ValueOf(*d)
-	fieldValue := value.FieldByName(name)
-	if fieldValue.Kind() == reflect.Invalid {
-		return "", ErrFieldDoesNotExist
+	valueType := value.Type()
+	for i := 0; i < valueType.NumField(); i++ {
+		field := valueType.Field(i)
+		if fieldVarname := field.Tag.Get(TagVarname); fieldVarname == varname {
+			return fmt.Sprint(value.Field(i).Interface()), nil
+		}
 	}
-	return fmt.Sprint(fieldValue.Interface()), nil
+	return "", ErrFieldDoesNotExist
 }

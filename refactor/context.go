@@ -17,13 +17,13 @@ const DialectVariablePrefix = "Dialect."
 type ErrVariableDoesNotExist string
 
 func (e ErrVariableDoesNotExist) Error() string {
-	return fmt.Sprintf("refactor: variable does not exist %v", string(e))
+	return fmt.Sprintf("refactor: variable does not exist %q", string(e))
 }
 
 type ErrInvalidVariableReference string
 
 func (e ErrInvalidVariableReference) Error() string {
-	return fmt.Sprintf("refactor: invalid variable reference %v", string(e))
+	return fmt.Sprintf("refactor: invalid variable reference %q", string(e))
 }
 
 type Context struct {
@@ -56,7 +56,7 @@ func (c *Context) GetVariable(name string) (string, error) {
 			return "", ErrVariableDoesNotExist(origName)
 		}
 		name = strings.TrimPrefix(name, DialectVariablePrefix)
-		value, err := c.Dialect.ValueOfField(name)
+		value, err := c.Dialect.ValueOfVariableField(name)
 		if err != nil {
 			return "", ErrVariableDoesNotExist(origName)
 		}

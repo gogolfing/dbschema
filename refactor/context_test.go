@@ -7,6 +7,20 @@ import (
 	"github.com/gogolfing/dbschema/dialect"
 )
 
+func TestErrVariableDoesNotExist_Error(t *testing.T) {
+	err := ErrVariableDoesNotExist("variable")
+	if err.Error() != `refactor: variable does not exist "variable"` {
+		t.Fail()
+	}
+}
+
+func TestErrInvalidVariableReference_Error(t *testing.T) {
+	err := ErrInvalidVariableReference("reference")
+	if err.Error() != `refactor: invalid variable reference "reference"` {
+		t.Fail()
+	}
+}
+
 func TestNewContext(t *testing.T) {
 	d := &dialect.Dialect{}
 	ctx := NewContext(d)
