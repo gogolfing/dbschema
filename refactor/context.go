@@ -1,20 +1,20 @@
 package refactor
 
-import "github.com/gogolfing/dbschema/dialect"
+// import "github.com/gogolfing/dbschema/dialect"
 
-type Context interface {
-	ExpandErr(in string) (string, error)
-}
+// type Context interface {
+// 	ExpandErr(in string) (string, error)
+// }
 
-func NewContext(d dialect.Dialect) *Context {
-	return &Context{
-		Dialect: d,
-	}
-}
+// func NewContext(d dialect.Dialect) *Context {
+// 	return &Context{
+// 		Dialect: d,
+// 	}
+// }
 
-func (c *Context) Expand(in string) string {
+// func (c *Context) Expand(in string) string {
 
-}
+// }
 
 // func (c *Context) Expand(v string) string {
 // 	value, err := c.GetVariableValue(v)
