@@ -11,11 +11,13 @@ const TagVarname = "varname"
 var ErrFieldDoesNotExist = errors.New("dialect: field does not exist")
 
 type Dialect struct {
-	//Actions.
-
 	CreateTable string
 
-	//Types.
+	QuoteRef   string
+	QuoteConst string
+
+	NotNull string
+	Default string
 
 	Int  string `varname:"Int"`
 	UUID string `varname:"UUID"`

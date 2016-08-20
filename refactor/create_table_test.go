@@ -5,18 +5,18 @@ import (
 	"testing"
 )
 
-func TestAddTable_Up_error(t *testing.T) {
-	a := &AddTable{}
+func TestCreateTable_Up_error(t *testing.T) {
+	a := &CreateTable{}
 
 	result, err := a.Up(NewContext(nil))
 
-	if _, ok := err.(ValidationError); result != nil || !ok {
+	if _, ok := err.(ErrInvalid); result != nil || !ok {
 		t.Fail()
 	}
 }
 
-func TestAddTable_Up_emptyColumns(t *testing.T) {
-	a := &AddTable{
+func TestCreateTable_Up_emptyColumns(t *testing.T) {
+	a := &CreateTable{
 		Name: "TableName",
 	}
 

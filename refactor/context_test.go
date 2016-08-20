@@ -30,7 +30,7 @@ func TestNewContext(t *testing.T) {
 	}
 }
 
-func TestContext_GetVariable(t *testing.T) {
+func TestContext_GetVariableValue(t *testing.T) {
 	tests := []struct {
 		c      *Context
 		name   string
@@ -77,9 +77,9 @@ func TestContext_GetVariable(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		result, err := test.c.GetVariable(test.name)
+		result, err := test.c.GetVariableValue(test.name)
 		if result != test.result || !reflect.DeepEqual(err, test.err) {
-			t.Errorf("test.c.GetVariable(%v) = %v, %v WANT %v, %v", test.name, result, err, test.result, test.err)
+			t.Errorf("test.c.GetVariableValue(%v) = %v, %v WANT %v, %v", test.name, result, err, test.result, test.err)
 		}
 	}
 }

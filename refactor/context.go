@@ -29,6 +29,8 @@ func (e ErrInvalidVariableReference) Error() string {
 type Context struct {
 	*dialect.Dialect
 
+	*conn.Connection
+
 	Variables map[string]string
 }
 
@@ -43,7 +45,15 @@ func NewContext(d *dialect.Dialect) *Context {
 	}
 }
 
-func (c *Context) GetVariable(name string) (string, error) {
+func (c *Context) Expand(v string) string {
+	value, err := c.GetVariableValue(v)
+	if err != nil {
+		return v
+	}
+	return value
+}
+
+func (c *Context) GetVariableValue(name string) (string, error) {
 	if !strings.HasPrefix(name, VariablePrefix) || !strings.HasSuffix(name, VariableSuffix) {
 		return "", ErrInvalidVariableReference(name)
 	}

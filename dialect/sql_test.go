@@ -12,6 +12,9 @@ func TestNewSqlDialect(t *testing.T) {
 		&Dialect{
 			CreateTable: "CREATE TABLE",
 
+			NotNull: "NOT NULL",
+			Default: "DEFAULT",
+
 			Int:  "int",
 			UUID: "UUID",
 		},

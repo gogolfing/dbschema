@@ -3,24 +3,38 @@ package refactor
 import "fmt"
 
 const (
-	True = "true"
+	True  = "true"
+	False = "false"
 )
 
-func BoolDefault(attr string, def bool) bool {
-	if attr == "" {
+func StringDefault(value *string, def string) string {
+	if value == nil {
 		return def
 	}
-	return attr == True
+	return *value
 }
 
-type Validator interface {
-	Validate() error
+func StringDefaultBool(value *string, def bool) bool {
+	if value == nil {
+		return def
+	}
+	return *value == True
 }
 
-type ValidationError string
+func ValidateStringBool(value *string) error {
+	if value == nil {
+		return nil
+	}
+	if *value != True || *value != False {
+		return fmt.Errorf("must be %q or %q", True, False)
+	}
+	return nil
+}
 
-func (e ValidationError) Error() string {
-	return fmt.Sprintf("refactor: validation error: %v", string(e))
+type ErrInvalid string
+
+func (e ErrInvalid) Error() string {
+	return fmt.Sprintf("refactor: invalid: %v", string(e))
 }
 
 func StmtsFromFuncs(ctx *Context, stmtFuncs ...func(ctx *Context) (stmt string, err error)) (stmts []string, err error) {
