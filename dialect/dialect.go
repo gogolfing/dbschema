@@ -2,35 +2,103 @@ package dialect
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 )
 
-const TagVarname = "varname"
+//SQL statements that are the same accross supported dialects.
+const (
+	CreateTable = "CREATE TABLE"
+)
 
-var ErrFieldDoesNotExist = errors.New("dialect: field does not exist")
+//SQL modifiers that are the same across supported dialects.
+const (
+	NotNull = "NOT NULL"
+	Default = "DEFAULT"
+)
 
-type Dialect struct {
-	CreateTable string
+var ErrMethodDoesNotExist = errors.New("dialect: method does not exist")
 
-	QuoteRef   string
-	QuoteConst string
+var ErrInvalidVariableMethodType = errors.New("dialect: invalid method type")
 
-	NotNull string
-	Default string
+var ErrNotSupported = errors.New("dialect: not supported")
 
-	Int  string `varname:"Int"`
-	UUID string `varname:"UUID"`
+//Dialect is the contract that all database types must implement for dbschema to
+//generate the correct SQL for a given DBMS dialect.
+type Dialect interface {
+	QuoteRef(in string) string
+
+	QuoteConst(in string) string
+
+	Int() (string, error)
+
+	UUID() (string, error)
 }
 
-func (d *Dialect) ValueOfVariableField(varname string) (string, error) {
-	value := reflect.ValueOf(*d)
-	valueType := value.Type()
-	for i := 0; i < valueType.NumField(); i++ {
-		field := valueType.Field(i)
-		if fieldVarname := field.Tag.Get(TagVarname); fieldVarname == varname {
-			return fmt.Sprint(value.Field(i).Interface()), nil
-		}
+func CallVariableMethodOnDialect(d Dialect, name string) (value string, err error) {
+	v := reflect.ValueOf(d)
+	method := v.MethodByName(name)
+	if method.Kind() == reflect.Invalid {
+		return "", ErrMethodDoesNotExist
 	}
-	return "", ErrFieldDoesNotExist
+	if !isMethodIsOfVariableType(method) {
+		return "", ErrInvalidVariableMethodType
+	}
+	out := method.Call([]reflect.Value{})
+	value = out[0].Interface().(string)
+	err, _ = out[1].Interface().(error)
+	return
+}
+
+func isMethodIsOfVariableType(method reflect.Value) bool {
+	t := method.Type()
+	if t.NumIn() != 0 {
+		return false
+	}
+	if t.NumOut() != 2 {
+		return false
+	}
+	if t.Out(0).Kind() != reflect.String {
+		return false
+	}
+	if out := t.Out(1); out.Kind() != reflect.Interface || out.String() != "error" {
+		return false
+	}
+	return true
+}
+
+type DialectStruct struct {
+	QuoteRefValue string
+
+	QuoteConstValue string
+
+	IntValue string
+
+	UUIDValue string
+}
+
+func (d *DialectStruct) QuoteRef(in string) string {
+	return Quote(in, d.QuoteRefValue)
+}
+
+func (d *DialectStruct) QuoteConst(in string) string {
+	return Quote(in, d.QuoteConstValue)
+}
+
+func (d *DialectStruct) Int() (string, error) {
+	return d.validString(d.IntValue)
+}
+
+func (d *DialectStruct) UUID() (string, error) {
+	return d.validString(d.UUIDValue)
+}
+
+func (d *DialectStruct) validString(value string) (string, error) {
+	if value == "" {
+		return "", ErrNotSupported
+	}
+	return value, nil
+}
+
+func Quote(in, quote string) string {
+	return in
 }

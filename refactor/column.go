@@ -3,6 +3,8 @@ package refactor
 import (
 	"encoding/xml"
 	"fmt"
+
+	"github.com/gogolfing/dbschema/dialect"
 )
 
 type Column struct {
@@ -15,7 +17,7 @@ type Column struct {
 
 	Default *string `xml:"default,attr"`
 
-	Constraint *Constraint `xml:"constraints"`
+	Constraint *Constraint `xml:"Constraint"`
 }
 
 func (c *Column) Definition(ctx *Context) (string, error) {
@@ -28,10 +30,10 @@ func (c *Column) Definition(ctx *Context) (string, error) {
 	result := fmt.Sprintf("%v %v", name, t)
 
 	if !c.IsNullableBool() {
-		result = fmt.Sprintf("%v %v", result, ctx.NotNull)
+		result = fmt.Sprintf("%v %v", result, dialect.NotNull)
 	}
 	if c.Default != nil {
-		result = fmt.Sprintf("%v %v %v", result, ctx.Default, c.DefaultConstant(ctx))
+		result = fmt.Sprintf("%v %v %v", result, dialect.Default, c.DefaultConstant(ctx))
 	}
 	return result, nil
 }

@@ -5,22 +5,39 @@ import (
 	"testing"
 )
 
-func TestDialect_ValueOfVariableField(t *testing.T) {
-	tests := []struct {
-		d       *Dialect
-		varname string
-		result  string
-		err     error
-	}{
-		{NewSqlDialect(), "CreateTable", "", ErrFieldDoesNotExist},
-		{NewSqlDialect(), "NotAField", "", ErrFieldDoesNotExist},
+func TestDialectStruct_isDialect(t *testing.T) {
+	var d Dialect = nil
+	d = &DialectStruct{}
+	d.Int() //to avoid the not used error.
+}
 
-		{&Dialect{Int: "IntValue"}, "Int", "IntValue", nil},
+func TestCallVariableMethodOnDialect(t *testing.T) {
+	d := &DialectStruct{
+		IntValue: "int",
+	}
+
+	tests := []struct {
+		name      string
+		result    string
+		resultErr error
+	}{
+		{"doesNotExist", "", ErrMethodDoesNotExist},
+		{"QuoteRef", "", ErrInvalidVariableMethodType},
+		{"UUID", "", ErrNotSupported},
+		{"Int", "int", nil},
 	}
 	for _, test := range tests {
-		result, err := test.d.ValueOfVariableField(test.varname)
-		if result != test.result || !reflect.DeepEqual(err, test.err) {
-			t.Fail()
+		result, resultErr := CallVariableMethodOnDialect(d, test.name)
+		if result != test.result || !reflect.DeepEqual(resultErr, test.resultErr) {
+			t.Errorf(
+				"CallVariableMethodOnDialect(%v, %v) = %v, %v WANT %v, %v",
+				d,
+				test.name,
+				result,
+				resultErr,
+				test.result,
+				test.resultErr,
+			)
 		}
 	}
 }
