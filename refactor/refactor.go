@@ -1,6 +1,11 @@
 package refactor
 
-// import "fmt"
+import "encoding/xml"
+
+func isXMLTokenEndElement(token xml.Token) bool {
+	_, ok := token.(xml.EndElement)
+	return ok
+}
 
 // const (
 // 	True  = "true"
