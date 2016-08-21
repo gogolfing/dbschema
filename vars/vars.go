@@ -20,6 +20,25 @@ type Variables struct {
 	Values []*Variable `xml:"Variable"`
 }
 
+func (v *Variables) Merge(other *Variables) {
+	for _, other := range other.Values {
+		v.setOrAppend(other)
+	}
+}
+
+func (v *Variables) setOrAppend(other *Variable) {
+	changed := false
+	for _, value := range v.Values {
+		if value.Name == other.Name {
+			value.Value = other.Value
+			changed = true
+		}
+	}
+	if !changed {
+		v.Values = append(v.Values, other)
+	}
+}
+
 func (v *Variables) Dereference(in string) (string, error) {
 	if IsVariableReference(in) {
 		name := in[1 : len(in)-1]
