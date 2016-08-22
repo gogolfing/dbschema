@@ -2,7 +2,6 @@ package refactor
 
 import (
 	"encoding/xml"
-	"fmt"
 	"io"
 	"os"
 	"path"
@@ -100,7 +99,6 @@ func (c *ChangeLog) unmarshalXMLInnerImport(dec *xml.Decoder, startImport xml.St
 		return errInvalidImportPath
 	}
 	path := c.importPath(imp.Path)
-	fmt.Println("import path", path)
 	cs, err := NewChangeSetFile(path)
 	if err != nil {
 		return err
@@ -119,7 +117,6 @@ func (c *ChangeLog) unmarshalXMLInnerChangeSet(dec *xml.Decoder, startChangeSet 
 }
 
 func (c *ChangeLog) importPath(relPath string) string {
-	fmt.Println("importPath()", c.path, relPath)
 	if c.path == "" {
 		return relPath
 	}
