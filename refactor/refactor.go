@@ -1,6 +1,18 @@
 package refactor
 
-// import "fmt"
+import (
+	"encoding/xml"
+	"fmt"
+)
+
+const (
+	errUnknownTokenType = xml.UnmarshalError("dbschema/refactor: unknown token type - xml syntax error")
+)
+
+func isXMLTokenEndElement(token xml.Token) bool {
+	_, ok := token.(xml.EndElement)
+	return ok
+}
 
 // const (
 // 	True  = "true"
@@ -31,11 +43,11 @@ package refactor
 // 	return nil
 // }
 
-// type ErrInvalid string
+type ErrInvalid string
 
-// func (e ErrInvalid) Error() string {
-// 	return fmt.Sprintf("refactor: invalid: %v", string(e))
-// }
+func (e ErrInvalid) Error() string {
+	return fmt.Sprintf("dbschema/refactor: invalid: %v", string(e))
+}
 
 // func StmtsFromFuncs(ctx *Context, stmtFuncs ...func(ctx *Context) (stmt string, err error)) (stmts []string, err error) {
 // 	for _, stmtFunc := range stmtFuncs {

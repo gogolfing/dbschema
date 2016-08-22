@@ -7,9 +7,9 @@ import (
 	"regexp"
 )
 
-var ErrDoesNotExist = errors.New("vars: does not exist")
+var ErrDoesNotExist = errors.New("dbschema/vars: does not exist")
 
-var ErrInvalidReference = errors.New("vars: invalid reference")
+var ErrInvalidReference = errors.New("dbschema/vars: invalid reference")
 
 var envReferenceRegexp = regexp.MustCompile(`^\$\{[^{}]+\}$`)
 var referenceRegexp = regexp.MustCompile(`^\{[^{}]+\}$`)
@@ -17,22 +17,38 @@ var referenceRegexp = regexp.MustCompile(`^\{[^{}]+\}$`)
 type Variables struct {
 	XMLName xml.Name `xml:"Variables"`
 
-	Values []*Variable `xml:"Variable"`
+	values map[string]string
 }
 
-func (v *Variables) Dereference(in string) (string, error) {
-	if IsVariableReference(in) {
-		name := in[1 : len(in)-1]
+func (v *Variables) Len() int {
+	return len(v.values)
+}
+
+func (v *Variables) Merge(other *Variables) {
+	v.ensureValuesExist()
+	for name, value := range other.values {
+		v.values[name] = value
+	}
+}
+
+func (v *Variables) Put(variable *Variable) {
+	v.ensureValuesExist()
+	v.values[variable.Name] = variable.Value
+}
+
+func (v *Variables) Dereference(expr string) (string, error) {
+	if IsVariableReference(expr) {
+		name := expr[1 : len(expr)-1]
 		return v.Get(name)
 	}
-	return DereferenceEnv(in)
+	return DereferenceEnv(expr)
 }
 
-func DereferenceEnv(in string) (string, error) {
-	if !IsEnvVariableReference(in) {
+func DereferenceEnv(expr string) (string, error) {
+	if !IsEnvVariableReference(expr) {
 		return "", ErrInvalidReference
 	}
-	name := in[2 : len(in)-1]
+	name := expr[2 : len(expr)-1]
 	value := os.Getenv(name)
 	if value == "" {
 		return "", ErrDoesNotExist
@@ -41,12 +57,36 @@ func DereferenceEnv(in string) (string, error) {
 }
 
 func (v *Variables) Get(name string) (string, error) {
-	for _, value := range v.Values {
-		if value.Name == name {
-			return value.Value, nil
-		}
+	value, ok := v.values[name]
+	if !ok {
+		return "", ErrDoesNotExist
 	}
-	return "", ErrDoesNotExist
+	return value, nil
+}
+
+func (v *Variables) UnmarshalXML(dec *xml.Decoder, start xml.StartElement) error {
+	v.ensureValuesExist()
+	xmlV := &xmlVariables{}
+	if err := dec.DecodeElement(xmlV, &start); err != nil {
+		return err
+	}
+	v.XMLName = xmlV.XMLName
+	for _, variable := range xmlV.Values {
+		v.Put(variable)
+	}
+	return nil
+}
+
+func (v *Variables) ensureValuesExist() {
+	if v.values == nil {
+		v.values = map[string]string{}
+	}
+}
+
+type xmlVariables struct {
+	XMLName xml.Name `xml:"Variables"`
+
+	Values []*Variable `xml:"Variable"`
 }
 
 type Variable struct {
@@ -56,10 +96,10 @@ type Variable struct {
 	Value string `xml:"value,attr"`
 }
 
-func IsEnvVariableReference(in string) bool {
-	return envReferenceRegexp.MatchString(in)
+func IsEnvVariableReference(expr string) bool {
+	return envReferenceRegexp.MatchString(expr)
 }
 
-func IsVariableReference(in string) bool {
-	return referenceRegexp.MatchString(in)
+func IsVariableReference(expr string) bool {
+	return referenceRegexp.MatchString(expr)
 }

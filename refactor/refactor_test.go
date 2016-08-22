@@ -1,5 +1,28 @@
 package refactor
 
+import (
+	"encoding/xml"
+	"strings"
+	"testing"
+)
+
+func decodeSourceIntoValue(t *testing.T, value interface{}, source string) {
+	dec := xml.NewDecoder(strings.NewReader(source))
+	err := dec.Decode(value)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func decodeSourceIntoValueError(t *testing.T, value interface{}, source string) error {
+	dec := xml.NewDecoder(strings.NewReader(source))
+	err := dec.Decode(value)
+	if err == nil {
+		t.Fatal("err should not be nil")
+	}
+	return err
+}
+
 // import "testing"
 
 // func TestStringDefaultBool(t *testing.T) {

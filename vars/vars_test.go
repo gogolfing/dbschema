@@ -8,6 +8,70 @@ import (
 	"testing"
 )
 
+func TestVariables_Len(t *testing.T) {
+	v := &Variables{}
+	if v.Len() != 0 {
+		t.Fail()
+	}
+
+	v = &Variables{
+		values: map[string]string{
+			"a": "a",
+			"e": "e",
+		},
+	}
+	if v.Len() != 2 {
+		t.Fail()
+	}
+}
+
+func TestVariables_Merge(t *testing.T) {
+	v := &Variables{
+		values: map[string]string{
+			"a": "a",
+			"e": "e",
+		},
+	}
+
+	other := &Variables{
+		values: map[string]string{
+			"a": "b",
+			"c": "d",
+		},
+	}
+
+	v.Merge(other)
+
+	if !reflect.DeepEqual(v, &Variables{
+		values: map[string]string{
+			"a": "b",
+			"c": "d",
+			"e": "e",
+		},
+	}) {
+		t.Fail()
+	}
+}
+
+func TestVariables_Put(t *testing.T) {
+	other := &Variable{
+		Name:  "name",
+		Value: "value",
+	}
+
+	v := &Variables{}
+
+	v.Put(other)
+
+	if !reflect.DeepEqual(v, &Variables{
+		values: map[string]string{
+			"name": "value",
+		},
+	}) {
+		t.Fail()
+	}
+}
+
 func TestVariables_Dereference(t *testing.T) {
 	source := `
 <Variables>
@@ -27,11 +91,12 @@ func TestVariables_Dereference(t *testing.T) {
 
 	if !reflect.DeepEqual(vars, &Variables{
 		XMLName: xml.Name{"", "Variables"},
-		Values: []*Variable{
-			newVariable("nameOne", "valueOne"),
-			newVariable("nameTwo", "valueTwo"),
+		values: map[string]string{
+			"nameOne": "valueOne",
+			"nameTwo": "valueTwo",
 		},
 	}) {
+		t.Error(vars)
 		t.Fail()
 	}
 
@@ -56,13 +121,5 @@ func TestVariables_Dereference(t *testing.T) {
 		if value != test.value || err != test.err {
 			t.Errorf("vars.Dereference(%v) = %v, %v WANT %v, %v", test.name, value, err, test.value, test.err)
 		}
-	}
-}
-
-func newVariable(name, value string) *Variable {
-	return &Variable{
-		XMLName: xml.Name{"", "Variable"},
-		Name:    name,
-		Value:   value,
 	}
 }
