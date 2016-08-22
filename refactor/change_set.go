@@ -9,7 +9,6 @@ import (
 const (
 	errChangeSetCannotBeEmpty = ErrInvalid("ChangeSet cannot be empty")
 	errInvalidChangeSetInner  = xml.UnmarshalError("dbschema/refactor: ChangeSet inner elements must be a valid refactor type")
-	errUnknownTokenType       = xml.UnmarshalError("dbschema/refactor: unknown token type")
 )
 
 type ChangeSet struct {
@@ -29,11 +28,9 @@ func NewChangeSetFile(path string) (*ChangeSet, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer file.Close()
 	c, err := NewChangeSetReader(file)
 	if err != nil {
-		return nil, err
-	}
-	if err := file.Close(); err != nil {
 		return nil, err
 	}
 	return c, nil
@@ -50,6 +47,7 @@ func NewChangeSetReader(in io.Reader) (*ChangeSet, error) {
 }
 
 func (c *ChangeSet) UnmarshalXML(dec *xml.Decoder, start xml.StartElement) error {
+	c.XMLName = start.Name
 	for _, attr := range start.Attr {
 		switch attr.Name.Local {
 		case "id":

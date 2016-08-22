@@ -8,6 +8,23 @@ import (
 	"testing"
 )
 
+func TestVariables_Len(t *testing.T) {
+	v := &Variables{}
+	if v.Len() != 0 {
+		t.Fail()
+	}
+
+	v = &Variables{
+		values: map[string]string{
+			"a": "a",
+			"e": "e",
+		},
+	}
+	if v.Len() != 2 {
+		t.Fail()
+	}
+}
+
 func TestVariables_Merge(t *testing.T) {
 	v := &Variables{
 		values: map[string]string{

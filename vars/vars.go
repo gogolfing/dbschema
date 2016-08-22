@@ -20,6 +20,10 @@ type Variables struct {
 	values map[string]string
 }
 
+func (v *Variables) Len() int {
+	return len(v.values)
+}
+
 func (v *Variables) Merge(other *Variables) {
 	v.ensureValuesExist()
 	for name, value := range other.values {

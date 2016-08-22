@@ -5,6 +5,10 @@ import (
 	"fmt"
 )
 
+const (
+	errUnknownTokenType = xml.UnmarshalError("dbschema/refactor: unknown token type - xml syntax error")
+)
+
 func isXMLTokenEndElement(token xml.Token) bool {
 	_, ok := token.(xml.EndElement)
 	return ok
