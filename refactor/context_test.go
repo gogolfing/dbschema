@@ -1,85 +1,32 @@
 package refactor
 
-// import (
-// 	"reflect"
-// 	"testing"
+import (
+	"github.com/gogolfing/dbschema/dialect"
+	_vars "github.com/gogolfing/dbschema/vars"
+)
 
-// 	"github.com/gogolfing/dbschema/dialect"
-// )
+const (
+	DefaultTestContextName = "dbscema/refactor/context_test.go/test"
+	DefaultTestContextDBMS = "dbscema/refactor/context_test.go/dbms"
+)
 
-// func TestErrVariableDoesNotExist_Error(t *testing.T) {
-// 	err := ErrVariableDoesNotExist("variable")
-// 	if err.Error() != `refactor: variable does not exist "variable"` {
-// 		t.Fail()
-// 	}
-// }
+func newDefaultTestContext() Context {
+	return newTestContext(nil, "", nil, []string{}...)
+}
 
-// func TestErrInvalidVariableReference_Error(t *testing.T) {
-// 	err := ErrInvalidVariableReference("reference")
-// 	if err.Error() != `refactor: invalid variable reference "reference"` {
-// 		t.Fail()
-// 	}
-// }
-
-// func TestNewContext(t *testing.T) {
-// 	d := &dialect.Dialect{}
-// 	ctx := NewContext(d)
-
-// 	if ctx.Dialect != d || ctx.Variables == nil || len(ctx.Variables) != 0 {
-// 		t.Fail()
-// 	}
-// }
-
-// func TestContext_GetVariableValue(t *testing.T) {
-// 	tests := []struct {
-// 		c      *Context
-// 		name   string
-// 		result string
-// 		err    error
-// 	}{
-// 		{
-// 			NewContext(nil),
-// 			"{Dialect.UUID}",
-// 			"UUID",
-// 			nil,
-// 		},
-// 		{
-// 			func() *Context {
-// 				c := NewContext(nil)
-// 				c.Variables["foo"] = "bar"
-// 				return c
-// 			}(),
-// 			"{foo}",
-// 			"bar",
-// 			nil,
-// 		},
-// 		{
-// 			func() *Context {
-// 				c := NewContext(nil)
-// 				c.Variables["foo"] = "bar"
-// 				return c
-// 			}(),
-// 			"foo",
-// 			"",
-// 			ErrInvalidVariableReference("foo"),
-// 		},
-// 		{
-// 			NewContext(nil),
-// 			"{Dialect.DoesNotExist}",
-// 			"",
-// 			ErrVariableDoesNotExist("Dialect.DoesNotExist"),
-// 		},
-// 		{
-// 			NewContext(nil),
-// 			"{foo}",
-// 			"",
-// 			ErrVariableDoesNotExist("foo"),
-// 		},
-// 	}
-// 	for _, test := range tests {
-// 		result, err := test.c.GetVariableValue(test.name)
-// 		if result != test.result || !reflect.DeepEqual(err, test.err) {
-// 			t.Errorf("test.c.GetVariableValue(%v) = %v, %v WANT %v, %v", test.name, result, err, test.result, test.err)
-// 		}
-// 	}
-// }
+func newTestContext(d dialect.Dialect, dbms string, names []string, vars ...string) Context {
+	if dbms == "" {
+		dbms = dbms
+	}
+	if len(names) == 0 {
+		names = []string{DefaultTestContextName}
+	}
+	if len(vars)%2 == 1 {
+		vars = vars[:len(vars)-1]
+	}
+	v := &_vars.Variables{}
+	for i := 0; i < len(vars); i += 2 {
+		v.Put(&_vars.Variable{Name: vars[i], Value: vars[i+1]})
+	}
+	return &context{dialect: d, names: names, dbms: dbms, vars: v}
+}

@@ -1,47 +1,42 @@
 package refactor
 
-// import "github.com/gogolfing/dbschema/dialect"
+import (
+	"github.com/gogolfing/dbschema/dialect"
+	"github.com/gogolfing/dbschema/vars"
+)
 
-// type Context interface {
-// 	ExpandErr(in string) (string, error)
-// }
+type Context interface {
+	Dialect() dialect.Dialect
 
-// func NewContext(d dialect.Dialect) *Context {
-// 	return &Context{
-// 		Dialect: d,
-// 	}
-// }
+	DBMS() string
 
-// func (c *Context) Expand(in string) string {
+	Expand(expr string) (value string, err error)
 
-// }
+	Names() []string
+}
 
-// func (c *Context) Expand(v string) string {
-// 	value, err := c.GetVariableValue(v)
-// 	if err != nil {
-// 		return v
-// 	}
-// 	return value
-// }
+type context struct {
+	dialect dialect.Dialect
 
-// func (c *Context) GetVariableValue(name string) (string, error) {
-// 	if !strings.HasPrefix(name, VariablePrefix) || !strings.HasSuffix(name, VariableSuffix) {
-// 		return "", ErrInvalidVariableReference(name)
-// 	}
-// 	name = name[1 : len(name)-1]
-// 	origName := name
+	dbms string
 
-// 	value, ok := c.Variables[name]
-// 	if !ok {
-// 		if !strings.HasPrefix(name, DialectVariablePrefix) {
-// 			return "", ErrVariableDoesNotExist(origName)
-// 		}
-// 		name = strings.TrimPrefix(name, DialectVariablePrefix)
-// 		value, err := c.Dialect.ValueOfVariableField(name)
-// 		if err != nil {
-// 			return "", ErrVariableDoesNotExist(origName)
-// 		}
-// 		return value, nil
-// 	}
-// 	return value, nil
-// }
+	names []string
+
+	vars *vars.Variables
+}
+
+func (c *context) Dialect() dialect.Dialect {
+	return c.dialect
+}
+
+func (c *context) DBMS() string {
+	return c.dbms
+}
+
+func (c *context) Expand(expr string) (value string, err error) {
+	return c.vars.Dereference(expr)
+}
+
+func (c *context) Names() []string {
+	return c.names
+}
