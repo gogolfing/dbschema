@@ -5,14 +5,18 @@ import "testing"
 func TestRawSql_UnmarshalXML(t *testing.T) {
 	source := `
 		<RawSql>
-			this is some raw "sql"
+			<Up>this is some raw up</Up>
+			<Down>this is some raw down</Down>
 		</RawSql>
 	`
 
 	rs := &RawSql{}
 	decodeSourceIntoValue(t, rs, source)
 
-	if rs.Value != "\n\t\t\tthis is some raw \"sql\"\n\t\t" {
+	if *rs.Up != "this is some raw up" {
+		t.Fail()
+	}
+	if *rs.Down != "this is some raw down" {
 		t.Fail()
 	}
 }

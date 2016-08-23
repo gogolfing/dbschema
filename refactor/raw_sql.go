@@ -5,5 +5,6 @@ import "encoding/xml"
 type RawSql struct {
 	XMLName xml.Name `xml:"RawSql"`
 
-	Value string `xml:",innerxml"`
+	Up   *string `xml:"Up"`
+	Down *string `xml:"Down"`
 }

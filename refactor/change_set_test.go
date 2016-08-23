@@ -9,11 +9,11 @@ import (
 func TestChangeSet_UnmarshalXML(t *testing.T) {
 	source := `
 		<ChangeSet id="id" name="name" author="author">
-			<RawSql>raw1</RawSql>
+			<RawSql></RawSql>
 			<!-- comment should be ignored -->
 			<! directive should be ignored >
 			<?proc inst should be ignored?>
-			<RawSql>raw2</RawSql>
+			<RawSql></RawSql>
 		</ChangeSet>
 	`
 
@@ -27,8 +27,8 @@ func TestChangeSet_UnmarshalXML(t *testing.T) {
 		t.Fail()
 	}
 	if !reflect.DeepEqual(cs.changers, []Changer{
-		&RawSql{XMLName: xml.Name{"", "RawSql"}, Value: "raw1"},
-		&RawSql{XMLName: xml.Name{"", "RawSql"}, Value: "raw2"},
+		&RawSql{XMLName: xml.Name{Local: "RawSql"}},
+		&RawSql{XMLName: xml.Name{Local: "RawSql"}},
 	}) {
 		t.Fail()
 	}
