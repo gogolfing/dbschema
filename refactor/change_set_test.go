@@ -10,9 +10,13 @@ func TestChangeSet_UnmarshalXML(t *testing.T) {
 	source := `
 		<ChangeSet id="id" name="name" author="author">
 			<RawSql></RawSql>
+
 			<!-- comment should be ignored -->
 			<! directive should be ignored >
 			<?proc inst should be ignored?>
+
+			<DoesNotExist /> <!-- ignore things that do no exist in our definition -->
+
 			<RawSql></RawSql>
 		</ChangeSet>
 	`

@@ -10,8 +10,7 @@ import (
 )
 
 const (
-	errInvalidImportPath     = ErrInvalid("Import.path cannot be empty")
-	errInvalidChangeLogInner = xml.UnmarshalError("dbschema/refactor: ChangeLog inner types must be a Variables, Import, or ChangeSet")
+	errInvalidImportPath = ErrInvalid("Import.path cannot be empty")
 )
 
 type ChangeLog struct {
@@ -78,7 +77,7 @@ func (c *ChangeLog) unmarshalXMLInnerElement(dec *xml.Decoder, innerStart xml.St
 	case "ChangeSet":
 		return c.unmarshalXMLInnerChangeSet(dec, innerStart)
 	}
-	return errInvalidChangeLogInner
+	return dec.Skip()
 }
 
 func (c *ChangeLog) unmarshalXMLInnerVariables(dec *xml.Decoder, startVariables xml.StartElement) error {

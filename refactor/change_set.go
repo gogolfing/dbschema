@@ -8,7 +8,6 @@ import (
 
 const (
 	errChangeSetCannotBeEmpty = ErrInvalid("ChangeSet cannot be empty")
-	errInvalidChangeSetInner  = xml.UnmarshalError("dbschema/refactor: ChangeSet inner elements must be a valid refactor type")
 )
 
 type ChangeSet struct {
@@ -64,9 +63,6 @@ func (c *ChangeSet) UnmarshalXML(dec *xml.Decoder, start xml.StartElement) error
 	if err != nil {
 		return err
 	}
-	if len(changers) == 0 {
-		return errChangeSetCannotBeEmpty
-	}
 	c.changers = changers
 	return nil
 }
@@ -88,7 +84,9 @@ func decodeInnerChangers(dec *xml.Decoder, start xml.StartElement) ([]Changer, e
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, changer)
+		if changer != nil {
+			result = append(result, changer)
+		}
 	}
 	return result, nil
 }
@@ -98,9 +96,11 @@ func decodeInnerChanger(dec *xml.Decoder, innerStart xml.StartElement) (Changer,
 	switch innerStart.Name.Local {
 	case "RawSql":
 		changer = &RawSql{}
+	default:
+		return nil, dec.Skip()
 	}
-	if changer == nil {
-		return nil, errInvalidChangeSetInner
+	if err := dec.DecodeElement(changer, &innerStart); err != nil {
+		return nil, err
 	}
-	return changer, dec.DecodeElement(changer, &innerStart)
+	return changer, nil
 }

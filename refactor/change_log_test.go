@@ -41,6 +41,8 @@ func TestNewChangeLogFile(t *testing.T) {
 				<Variable name="varNameTwo" value="varValueTwo" />
 			</Variables>
 
+			<DoesNotExist /> <!-- ignore things that do no exist in our definition -->
+
 			<Import path="` + path.Base(importedChangeSetFile.Name()) + `" />
 
 			<ChangeSet id="id3" author="author local" name="name1">
