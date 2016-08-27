@@ -2,14 +2,22 @@ package vars
 
 import (
 	"encoding/xml"
-	"errors"
+	"fmt"
 	"os"
 	"regexp"
 )
 
-var ErrDoesNotExist = errors.New("dbschema/vars: does not exist")
+type ErrDoesNotExist string
 
-var ErrInvalidReference = errors.New("dbschema/vars: invalid reference")
+func (e ErrDoesNotExist) Error() string {
+	return fmt.Sprintf("dbschema/vars: variable %q does not exist", string(e))
+}
+
+type ErrInvalidReference string
+
+func (e ErrInvalidReference) Error() string {
+	return fmt.Sprintf("dbschema/vars: invalid reference %q", string(e))
+}
 
 var envReferenceRegexp = regexp.MustCompile(`^\$\{[^{}]+\}$`)
 var referenceRegexp = regexp.MustCompile(`^\{[^{}]+\}$`)
@@ -39,29 +47,33 @@ func (v *Variables) Put(variable *Variable) {
 func (v *Variables) Dereference(expr string) (string, error) {
 	if IsVariableReference(expr) {
 		name := expr[1 : len(expr)-1]
-		return v.Get(name)
+		value := v.get(name)
+		if value == nil {
+			return "", ErrDoesNotExist(expr)
+		}
+		return *value, nil
 	}
 	return DereferenceEnv(expr)
 }
 
 func DereferenceEnv(expr string) (string, error) {
 	if !IsEnvVariableReference(expr) {
-		return "", ErrInvalidReference
+		return "", ErrInvalidReference(expr)
 	}
 	name := expr[2 : len(expr)-1]
 	value := os.Getenv(name)
 	if value == "" {
-		return "", ErrDoesNotExist
+		return "", ErrDoesNotExist(expr)
 	}
 	return value, nil
 }
 
-func (v *Variables) Get(name string) (string, error) {
+func (v *Variables) get(name string) *string {
 	value, ok := v.values[name]
 	if !ok {
-		return "", ErrDoesNotExist
+		return nil
 	}
-	return value, nil
+	return &value
 }
 
 func (v *Variables) UnmarshalXML(dec *xml.Decoder, start xml.StartElement) error {
