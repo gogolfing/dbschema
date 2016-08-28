@@ -29,19 +29,14 @@ func NewChangeLogFile(path string) (*ChangeLog, error) {
 		return nil, err
 	}
 	defer file.Close()
-	c, err := NewChangeLogReader(path, file)
-	if err != nil {
-		return nil, err
-	}
-	return c, nil
+	return NewChangeLogReader(path, file)
 }
 
 func NewChangeLogReader(path string, in io.Reader) (*ChangeLog, error) {
 	dec := xml.NewDecoder(in)
 	c := &ChangeLog{}
 	c.path = path
-	err := dec.Decode(c)
-	if err != nil {
+	if err := dec.Decode(c); err != nil {
 		return nil, err
 	}
 	return c, nil

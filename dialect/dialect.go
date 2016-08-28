@@ -3,6 +3,8 @@ package dialect
 import (
 	"errors"
 	"reflect"
+
+	"github.com/gogolfing/dbschema/conn"
 )
 
 //SQL statements that are the same accross supported dialects.
@@ -16,15 +18,24 @@ const (
 	Default = "DEFAULT"
 )
 
-var ErrMethodDoesNotExist = errors.New("dialect: method does not exist")
+var ErrMethodDoesNotExist = errors.New("dbschema/dialect: method does not exist")
 
-var ErrInvalidVariableMethodType = errors.New("dialect: invalid method type")
+var ErrInvalidVariableMethodType = errors.New("dbschema/dialect: invalid method type")
 
-var ErrNotSupported = errors.New("dialect: not supported")
+var ErrNotSupported = errors.New("dbschema/dialect: not supported")
+
+type ErrUnsupportedDBMS string
+
+func (e ErrUnsupportedDBMS)
+
+= errors.New("dbschema/dialect: unsupported or undefined DBMS type")
+
 
 //Dialect is the contract that all database types must implement for dbschema to
 //generate the correct SQL for a given DBMS dialect.
 type Dialect interface {
+	ConnectionString(conn *conn.Connection) (string, error)
+
 	QuoteRef(in string) string
 
 	QuoteConst(in string) string
@@ -32,6 +43,33 @@ type Dialect interface {
 	Int() (string, error)
 
 	UUID() (string, error)
+}
+
+func NewDialect(dbms string) (Dialect, error) {
+	dialects := map[string]func() Dialect{
+		Postgresql: NewPostgresqlDialect,
+	}
+	d, ok := dialects[dbms]
+	if !ok {
+		return nil, ErrUnsupportedDBMS
+	}
+	return d(), nil
+}
+
+type dialect struct {
+	connectionString func(conn *conn.Connection) (string, error)
+	*DialectStruct
+}
+
+func newDialect(connStringFunc func(*conn.Connection) (string, error), ds *DialectStruct) Dialect {
+	return &dialect{
+		connectionString: connStringFunc,
+		DialectStruct:    ds,
+	}
+}
+
+func (d *dialect) ConnectionString(conn *conn.Connection) (string, error) {
+	return d.connectionString(conn)
 }
 
 func CallVariableMethodOnDialect(d Dialect, name string) (value string, err error) {

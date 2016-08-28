@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 )
 
 type ErrDoesNotExist string
@@ -45,6 +46,7 @@ func (v *Variables) Put(variable *Variable) {
 }
 
 func (v *Variables) Dereference(expr string) (string, error) {
+	expr = strings.TrimSpace(expr)
 	if IsVariableReference(expr) {
 		name := expr[1 : len(expr)-1]
 		value := v.get(name)
@@ -57,6 +59,7 @@ func (v *Variables) Dereference(expr string) (string, error) {
 }
 
 func DereferenceEnv(expr string) (string, error) {
+	expr = strings.TrimSpace(expr)
 	if !IsEnvVariableReference(expr) {
 		return "", ErrInvalidReference(expr)
 	}
@@ -82,6 +85,7 @@ func (v *Variables) UnmarshalXML(dec *xml.Decoder, start xml.StartElement) error
 	if err := dec.DecodeElement(xmlV, &start); err != nil {
 		return err
 	}
+
 	v.XMLName = xmlV.XMLName
 	for _, variable := range xmlV.Values {
 		v.Put(variable)
@@ -109,9 +113,9 @@ type Variable struct {
 }
 
 func IsEnvVariableReference(expr string) bool {
-	return envReferenceRegexp.MatchString(expr)
+	return envReferenceRegexp.MatchString(strings.TrimSpace(expr))
 }
 
 func IsVariableReference(expr string) bool {
-	return referenceRegexp.MatchString(expr)
+	return referenceRegexp.MatchString(strings.TrimSpace(expr))
 }

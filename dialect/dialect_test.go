@@ -5,12 +5,6 @@ import (
 	"testing"
 )
 
-func TestDialectStruct_isDialect(t *testing.T) {
-	var d Dialect = nil
-	d = &DialectStruct{}
-	d.Int() //to avoid the not used error.
-}
-
 func TestCallVariableMethodOnDialect(t *testing.T) {
 	d := &DialectStruct{
 		IntValue: "int",
