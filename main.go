@@ -8,56 +8,53 @@ import (
 )
 
 const (
-	ExitCodeUnknownError             = 1
-	ExitCodeGlobalParseFailed        = 2
+	ExitCodeUnknownError = 1
+
+	ExitCodeParsingGlobalFlagsFailed = 2
 	ExitCodeCreatingConnectionFailed = 3
 	ExitCodeUnsupportedDBMS          = 4
+	ExitCodeParsingCommandFailed     = 5
 )
 
+var cliArgs = os.Args[1:]
+
 func main() {
+	mainFunc()
+}
+
+var mainFunc = func() {
 	cli := cli.NewCLI(os.Stdout, os.Stderr)
 
-	err := cli.Run(os.Args[1:])
+	err := cli.Run(cliArgs)
 
 	if err != nil {
-		exitError(err)
+		exitError(os.Exit, getCode, err)
 		return
 	}
 }
 
-func exitError(err error) {
-	code := ExitCodeUnknownError
-	switch {
-
-	case err == cli.ErrGlobalFlagParsingFailed:
-		code = ExitCodeGlobalParseFailed
-
-	case err == cli.ErrCreatingConnectionFailed:
-		code = ExitCodeCreatingConnectionFailed
-
-	case dialect.ErrUnsupportedDBMS:
-		code = ExitCodeUnsupportedDBMS
-
-	}
-	exit(code)
+var exitError = func(exit func(int), getCode func(error) int, err error) {
+	exit(getCode(err))
 }
 
-/*
-func exitError(err error) {
-	codes := map[error]int{
-		cli.ErrGlobalFlagParsingFailed:  ExitCodeGlobalParseFailed,
+var getCode = func(err error) int {
+	errCodes := map[error]int{
+		cli.ErrGlobalFlagParsingFailed:  ExitCodeParsingGlobalFlagsFailed,
 		cli.ErrCreatingConnectionFailed: ExitCodeCreatingConnectionFailed,
-		dialect.ErrUnsupportedDBMS:      ExitCodeUnsupportedDBMS,
+		cli.ErrCommandFlagParsingFailed: ExitCodeParsingCommandFailed,
 	}
-	code, ok := codes[err]
-	if !ok {
-		fmt.Fprintln(os.Stderr, err)
-		code = ExitCodeUnknownError
-	}
-	exit(code)
-}
-*/
 
-func exit(code int) {
-	os.Exit(code)
+	code, ok := errCodes[err]
+	if ok {
+		return code
+	}
+
+	if _, ok := err.(cli.ErrUnknownOrUndefinedCommand); ok {
+		return ExitCodeParsingCommandFailed
+	}
+	if _, ok := err.(dialect.ErrUnsupportedDBMS); ok {
+		return ExitCodeUnsupportedDBMS
+	}
+
+	return ExitCodeUnknownError
 }

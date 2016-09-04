@@ -24,7 +24,14 @@ const (
 var (
 	ErrGlobalFlagParsingFailed  = errors.New("dbschema/cli: parsing global flags failed")
 	ErrCreatingConnectionFailed = errors.New("dbschmea/cli: could not create connection")
+	ErrCommandFlagParsingFailed = errors.New("dbschema/cli: parsing command flags failed")
 )
+
+type ErrUnknownOrUndefinedCommand string
+
+func (e ErrUnknownOrUndefinedCommand) Error() string {
+	return fmt.Sprintf("dbschema/cli: unknown or undefined sub-command %q", string(e))
+}
 
 const (
 	globalOptionsName     = "global_options"
@@ -72,19 +79,26 @@ func (c *CLI) Run(args []string) error {
 		c.printlnError(err)
 		return ErrCreatingConnectionFailed
 	}
+	fmt.Println(conn)
 
-	dialect, err := dialect.NewDialect(conn.DBMS)
+	dialect, err := c.createDialect(conn)
 	if err != nil {
 		c.printlnError(err)
 		return err
 	}
 	fmt.Println(dialect)
 
-	fmt.Println(commandArgs)
+	sc, err := c.parseSubCommand(commandArgs)
+	if err != nil {
+		c.printlnError(err)
+		return ErrCommandFlagParsingFailed
+	}
+	fmt.Println(sc)
+
 	return nil
 }
 
-func (c *CLI) parseGlobalFlags(osArgs []string) (*globalFlags, []string, error) {
+func (c *CLI) parseGlobalFlags(args []string) (*globalFlags, []string, error) {
 	fs := flag.NewFlagSet(globalOptionsName, flag.ContinueOnError)
 	fs.SetOutput(ioutil.Discard)
 	fs.Usage = c.usage
@@ -98,7 +112,7 @@ func (c *CLI) parseGlobalFlags(osArgs []string) (*globalFlags, []string, error) 
 	fs.StringVar(&gf.password, "password", DefaultPassword, "password to connect with. this will override the value in -conn if not empty")
 	fs.Var(&gf.connParams, "conn-param", "list of connection parameters in the form of <name>=<value>. should be set with multiple flag definitions. these will override already set parameters in -conn")
 
-	err := fs.Parse(osArgs)
+	err := fs.Parse(args)
 	fs.SetOutput(c.outErr)
 
 	if err != nil {
@@ -132,6 +146,23 @@ func (c *CLI) createConnection(gf *globalFlags) (*conn.Connection, error) {
 		conn.PutParam(name, value)
 	})
 	return conn, nil
+}
+
+func (c *CLI) createDialect(conn *conn.Connection) (dialect.Dialect, error) {
+	dbms, err := conn.DBMSValue()
+	if err != nil {
+		return nil, err
+	}
+	return dialect.NewDialect(dbms)
+}
+
+func (c *CLI) parseSubCommand(args []string) (subCommand, error) {
+	if len(args) < 1 {
+		return nil, ErrUnknownOrUndefinedCommand("")
+	}
+	command := args[0]
+	commandArgs := args[1:]
+	return c.parseSubCommandFromName(command, commandArgs)
 }
 
 func (c *CLI) printlnError(err error) {

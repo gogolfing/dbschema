@@ -42,7 +42,6 @@ func NewConnectionReader(in io.Reader) (*Connection, error) {
 	return c, nil
 }
 
-/*
 func (c *Connection) DBMSValue() (string, error) {
 	return possibleVariable(c.DBMS)
 }
@@ -58,7 +57,6 @@ func (c *Connection) UserValue() (string, error) {
 func (c *Connection) PasswordValue() (string, error) {
 	return possibleVariable(c.Password)
 }
-*/
 
 func (c *Connection) PutParam(name, value string) {
 	c.ensureParamsExist()

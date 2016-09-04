@@ -2,6 +2,7 @@ package dialect
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 
 	"github.com/gogolfing/dbschema/conn"
@@ -26,10 +27,9 @@ var ErrNotSupported = errors.New("dbschema/dialect: not supported")
 
 type ErrUnsupportedDBMS string
 
-func (e ErrUnsupportedDBMS)
-
-= errors.New("dbschema/dialect: unsupported or undefined DBMS type")
-
+func (e ErrUnsupportedDBMS) Error() string {
+	return fmt.Sprintf("dbschema/dialect: unsupported or undefined DBMS %q", string(e))
+}
 
 //Dialect is the contract that all database types must implement for dbschema to
 //generate the correct SQL for a given DBMS dialect.
@@ -51,7 +51,7 @@ func NewDialect(dbms string) (Dialect, error) {
 	}
 	d, ok := dialects[dbms]
 	if !ok {
-		return nil, ErrUnsupportedDBMS
+		return nil, ErrUnsupportedDBMS(dbms)
 	}
 	return d(), nil
 }
