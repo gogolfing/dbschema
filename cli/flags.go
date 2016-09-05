@@ -36,6 +36,7 @@ func parseFlagSetter(setter flagSetter, args []string) ([]string, error) {
 }
 
 const (
+	DefaultVerbose            = false
 	DefaultConnectionFilePath = "connection.xml"
 	DefaultDBMS               = ""
 	DefaultHost               = ""
@@ -52,6 +53,8 @@ const (
 
 type globalFlags struct {
 	command string
+
+	verbose bool
 
 	conn       string
 	dbms       string
@@ -83,6 +86,7 @@ func (f *globalFlags) modifyArgs(args []string) []string {
 }
 
 func (f *globalFlags) set(fs *flag.FlagSet) {
+	fs.BoolVar(&f.verbose, "v", DefaultVerbose, "print verbose output")
 	fs.StringVar(&f.conn, "conn", DefaultConnectionFilePath, "path to connection file")
 	fs.StringVar(&f.dbms, "dbms", DefaultDBMS, "the type of the dbms to connect to. this will override the value in -conn if not default")
 	fs.StringVar(&f.host, "host", DefaultHost, "host to connect to. this will override the value in -conn if not empty")
