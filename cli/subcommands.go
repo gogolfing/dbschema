@@ -2,10 +2,10 @@ package cli
 
 import "github.com/gogolfing/dbschema/dbschema"
 
-type subCommand interface {
-	Run(*dbschema.DbSchema, dbschema.Driver)
-}
+type subCommandFunc func(*dbschema.DBSchema, subCommandFlags) error
 
-func (c *CLI) parseSubCommandFromName(name string, args []string) (subCommand, error) {
-	return nil, nil
+type subCommandFlags interface{}
+
+func (c *CLI) parseSubCommandFromName(name string, args []string) (subCommandFunc, subCommandFlags, error) {
+	return nil, nil, nil
 }

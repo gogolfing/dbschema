@@ -4,7 +4,7 @@ import "github.com/gogolfing/dbschema/conn"
 
 const Postgresql = "postgresql"
 
-func NewPostgresqlDialect() Dialect {
+func NewDialectPostgresql() Dialect {
 	return newDialect(newPostgresqlConnectionString, newPostgresqlDialectStruct())
 }
 

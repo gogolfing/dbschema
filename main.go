@@ -23,7 +23,7 @@ func main() {
 }
 
 var mainFunc = func() {
-	cli := cli.NewCLI(os.Stdout, os.Stderr)
+	cli := cli.NewCLI(os.Args[0], os.Stdout, os.Stderr)
 
 	err := cli.Run(cliArgs)
 

@@ -34,11 +34,15 @@ func (e ErrUnsupportedDBMS) Error() string {
 //Dialect is the contract that all database types must implement for dbschema to
 //generate the correct SQL for a given DBMS dialect.
 type Dialect interface {
+	DBMS() string
+
 	ConnectionString(conn *conn.Connection) (string, error)
 
 	QuoteRef(in string) string
 
 	QuoteConst(in string) string
+
+	//Following are the "variable" methods.
 
 	Int() (string, error)
 
@@ -47,7 +51,7 @@ type Dialect interface {
 
 func NewDialect(dbms string) (Dialect, error) {
 	dialects := map[string]func() Dialect{
-		Postgresql: NewPostgresqlDialect,
+		Postgresql: NewDialectPostgresql,
 	}
 	d, ok := dialects[dbms]
 	if !ok {
@@ -105,6 +109,8 @@ func isMethodIsOfVariableType(method reflect.Value) bool {
 }
 
 type DialectStruct struct {
+	DBMSValue string
+
 	QuoteRefValue string
 
 	QuoteConstValue string
@@ -112,6 +118,10 @@ type DialectStruct struct {
 	IntValue string
 
 	UUIDValue string
+}
+
+func (d *DialectStruct) DBMS() string {
+	return d.DBMSValue
 }
 
 func (d *DialectStruct) QuoteRef(in string) string {

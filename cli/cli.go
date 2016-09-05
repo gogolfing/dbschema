@@ -2,23 +2,11 @@ package cli
 
 import (
 	"errors"
-	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
-	"os"
 
 	"github.com/gogolfing/dbschema/conn"
 	"github.com/gogolfing/dbschema/dialect"
-)
-
-const (
-	DefaultConnectionFilePath = "connection.xml"
-	DefaultDBMS               = ""
-	DefaultHost               = "localhost"
-	DefaultPort               = 0
-	DefaultUser               = ""
-	DefaultPassword           = ""
 )
 
 var (
@@ -33,44 +21,25 @@ func (e ErrUnknownOrUndefinedCommand) Error() string {
 	return fmt.Sprintf("dbschema/cli: unknown or undefined sub-command %q", string(e))
 }
 
-const (
-	globalOptionsName     = "global_options"
-	commandParametersName = "command_parameters"
-	commandOptionsName    = "command_options"
-)
-
-type globalFlags struct {
-	conn       string
-	dbms       string
-	host       string
-	port       int
-	user       string
-	password   string
-	connParams connParams
-}
-
-func newGlobalFlags() *globalFlags {
-	return &globalFlags{
-		conn:       "",
-		connParams: newConnParams(),
-	}
-}
-
 type CLI struct {
+	command string
+
 	out    io.Writer
 	outErr io.Writer
 }
 
-func NewCLI(out, outErr io.Writer) *CLI {
+func NewCLI(command string, out, outErr io.Writer) *CLI {
 	return &CLI{
-		out:    out,
-		outErr: outErr,
+		command: command,
+		out:     out,
+		outErr:  outErr,
 	}
 }
 
 func (c *CLI) Run(args []string) error {
 	gf, commandArgs, err := c.parseGlobalFlags(args)
 	if err != nil {
+		c.printError(err)
 		return ErrGlobalFlagParsingFailed
 	}
 
@@ -88,38 +57,23 @@ func (c *CLI) Run(args []string) error {
 	}
 	fmt.Println(dialect)
 
-	sc, err := c.parseSubCommand(commandArgs)
+	scFunc, scFlags, err := c.parseSubCommand(commandArgs)
 	if err != nil {
 		c.printlnError(err)
 		return ErrCommandFlagParsingFailed
 	}
-	fmt.Println(sc)
+	fmt.Println(scFunc == nil, scFlags)
 
 	return nil
 }
 
 func (c *CLI) parseGlobalFlags(args []string) (*globalFlags, []string, error) {
-	fs := flag.NewFlagSet(globalOptionsName, flag.ContinueOnError)
-	fs.SetOutput(ioutil.Discard)
-	fs.Usage = c.usage
-
-	gf := &globalFlags{}
-	fs.StringVar(&gf.conn, "conn", DefaultConnectionFilePath, "path to connection file")
-	fs.StringVar(&gf.dbms, "dbms", DefaultDBMS, "the type of the dbms to connect to. this will override the value in -conn if not default")
-	fs.StringVar(&gf.host, "host", DefaultHost, "host to connect to. this will override the value in -conn if not empty")
-	fs.IntVar(&gf.port, "port", DefaultPort, "port to connect to. this will override the value in -conn if not empty")
-	fs.StringVar(&gf.user, "user", DefaultUser, "user to connect as. this will override the value in -conn if not empty")
-	fs.StringVar(&gf.password, "password", DefaultPassword, "password to connect with. this will override the value in -conn if not empty")
-	fs.Var(&gf.connParams, "conn-param", "list of connection parameters in the form of <name>=<value>. should be set with multiple flag definitions. these will override already set parameters in -conn")
-
-	err := fs.Parse(args)
-	fs.SetOutput(c.outErr)
-
+	gf := newGlobalFlags(c.command)
+	commandArgs, err := parseFlagSetter(gf, args)
 	if err != nil {
-		fs.PrintDefaults()
 		return nil, nil, err
 	}
-	return gf, fs.Args(), err
+	return gf, commandArgs, nil
 }
 
 func (c *CLI) createConnection(gf *globalFlags) (*conn.Connection, error) {
@@ -156,26 +110,19 @@ func (c *CLI) createDialect(conn *conn.Connection) (dialect.Dialect, error) {
 	return dialect.NewDialect(dbms)
 }
 
-func (c *CLI) parseSubCommand(args []string) (subCommand, error) {
+func (c *CLI) parseSubCommand(args []string) (subCommandFunc, subCommandFlags, error) {
 	if len(args) < 1 {
-		return nil, ErrUnknownOrUndefinedCommand("")
+		return nil, nil, ErrUnknownOrUndefinedCommand("")
 	}
 	command := args[0]
 	commandArgs := args[1:]
 	return c.parseSubCommandFromName(command, commandArgs)
 }
 
-func (c *CLI) printlnError(err error) {
-	fmt.Fprintln(c.outErr, err)
+func (c *CLI) printError(err error) {
+	fmt.Fprint(c.outErr, err)
 }
 
-func (c *CLI) usage() {
-	fmt.Fprintf(
-		c.outErr,
-		"Usage: %s [%s...] <command> [%s...] [%s...]\n",
-		os.Args[0],
-		globalOptionsName,
-		commandParametersName,
-		commandOptionsName,
-	)
+func (c *CLI) printlnError(err error) {
+	fmt.Fprintln(c.outErr, err)
 }
