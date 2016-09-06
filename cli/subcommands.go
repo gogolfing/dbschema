@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"github.com/gogolfing/dbschema/dbschema"
+	"github.com/gogolfing/dbschema/logger"
 )
 
 const (
@@ -19,29 +20,35 @@ func (e errUnknownOrUndefinedSubCommand) Error() string {
 	return fmt.Sprintf("unknown or undefined sub-command %q", string(e))
 }
 
-type subCommandFunc func(dbschema *dbschema.DBSchema, logger dbschema.Logger) error
+type subCommandFunc func(dbschema *dbschema.DBSchema, logger logger.Logger) error
 
 type subCommand interface {
 	flagSetter
 
 	description() string
+	long() string
 
-	execute(dbschema *dbschema.DBSchema, logger dbschema.Logger) error
+	needsDBSchema() bool
+	execute(dbschema *dbschema.DBSchema, logger logger.Logger) error
 }
 
 type subCommandStruct struct {
 	flagSetter
 
 	descriptionValue string
+	longValue        string
 
-	executor subCommandFunc
+	needsDBSchemaValue bool
+	executor           subCommandFunc
 }
 
-func newSubCommand(fs flagSetter, description string, executor subCommandFunc) subCommand {
+func newSubCommand(fs flagSetter, description, long string, needsDBSchema bool, executor subCommandFunc) subCommand {
 	return &subCommandStruct{
-		flagSetter:       fs,
-		descriptionValue: description,
-		executor:         executor,
+		flagSetter:         fs,
+		descriptionValue:   description,
+		longValue:          long,
+		needsDBSchemaValue: needsDBSchema,
+		executor:           executor,
 	}
 }
 
@@ -49,7 +56,15 @@ func (s *subCommandStruct) description() string {
 	return s.descriptionValue
 }
 
-func (s *subCommandStruct) execute(dbschema *dbschema.DBSchema, logger dbschema.Logger) error {
+func (s *subCommandStruct) long() string {
+	return s.longValue
+}
+
+func (s *subCommandStruct) needsDBSchema() bool {
+	return s.needsDBSchemaValue
+}
+
+func (s *subCommandStruct) execute(dbschema *dbschema.DBSchema, logger logger.Logger) error {
 	return s.executor(dbschema, logger)
 }
 

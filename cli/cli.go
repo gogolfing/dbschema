@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"strings"
 
 	"github.com/gogolfing/dbschema/conn"
 	"github.com/gogolfing/dbschema/dialect"
+	"github.com/gogolfing/dbschema/logger"
 )
 
 var (
@@ -40,13 +42,17 @@ func (c *CLI) Run(args []string) error {
 	}
 	fmt.Fprintln(ioutil.Discard, gf, subCommandArgs)
 
-	subCommand, err := c.runSubCommand(subCommandArgs)
+	sc, err := c.runSubCommand(subCommandArgs)
 	if err != nil {
 		return ErrSubCommandFlagParsingFailed
 	}
-	fmt.Fprintln(ioutil.Discard, subCommand)
+	fmt.Fprintln(ioutil.Discard, sc)
 
-	subCommand.execute(nil, nil)
+	logger := c.createLogger(gf)
+
+	if !sc.needsDBSchema() {
+		return c.runWithoutDBSChema(sc, logger)
+	}
 
 	/*
 		conn, err := c.createConnection(gf)
@@ -88,6 +94,8 @@ func (c *CLI) runSubCommand(args []string) (sc subCommand, err error) {
 			if _, ok := err.(errUnknownOrUndefinedSubCommand); ok {
 				fmt.Fprintln(c.outErr, "\n")
 				printSubCommandsUsage(c.outErr)
+			} else {
+				fmt.Fprintf(c.outErr, "\n%v\n", strings.TrimLeft(sc.long(), "\n"))
 			}
 		}
 	}()
@@ -101,6 +109,18 @@ func (c *CLI) runSubCommand(args []string) (sc subCommand, err error) {
 	}
 	_, err = parseFlagSetter(sc, args[1:])
 	return
+}
+
+func (c *CLI) createLogger(gf *globalFlags) logger.Logger {
+	var verbose io.Writer = nil
+	if gf.verbose {
+		verbose = c.out
+	}
+	return logger.NewLoggerWriters(verbose, c.out, c.out, c.outErr)
+}
+
+func (c *CLI) runWithoutDBSChema(sc subCommand, logger logger.Logger) error {
+	return sc.execute(nil, logger)
 }
 
 func (c *CLI) createConnection(gf *globalFlags) (*conn.Connection, error) {
