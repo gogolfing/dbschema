@@ -9,37 +9,31 @@ import (
 	"github.com/gogolfing/dbschema/logger"
 )
 
-const versionDescription = "prints the version"
+const versionShort = "prints the version"
 const versionLong = `
 version prints the current version information.
 It ignores all ` + globalOptionsName + `.`
 
-func createVersionSubCommand() subCommand {
-	return newSubCommand(
-		&versionFlags{},
-		versionDescription,
-		versionLong,
-		false,
-		version,
-	)
+func createVersionSubCommand() SubCommand {
+	return &subCommandStruct{
+		FlagSetter: &versionFlags{
+			&flagSetterStruct{
+				name: SubCommandVersion,
+			},
+		},
+		short:         versionShort,
+		long:          versionLong,
+		needsDBSchema: false,
+		executor:      version,
+	}
 }
 
-type versionFlags struct{}
-
-func (vf *versionFlags) name() string {
-	return SubCommandVersion
+type versionFlags struct {
+	*flagSetterStruct
 }
 
-func (vf *versionFlags) canHaveExtraArgs() bool {
-	return false
-}
-
-func (vf *versionFlags) preParseArgs(args []string) []string {
-	return args
-}
-
-func (vf *versionFlags) usage(out io.Writer, _ *flag.FlagSet) {
-	name := vf.name()
+func (vf *versionFlags) Usage(out io.Writer, _ *flag.FlagSet) {
+	name := vf.Name()
 	fmt.Fprintf(out, "Usage of %v: %v\n", name, name)
 	fmt.Fprintf(
 		out,
@@ -49,8 +43,6 @@ func (vf *versionFlags) usage(out io.Writer, _ *flag.FlagSet) {
 		name,
 	)
 }
-
-func (vf *versionFlags) set(_ *flag.FlagSet) {}
 
 func version(_ *dbschema.DBSchema, logger logger.Logger) error {
 	_, err := fmt.Fprintln(logger.Info(), dbschema.Version)

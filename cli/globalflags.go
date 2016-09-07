@@ -36,8 +36,6 @@ func printCommandUsage(out io.Writer, command string) {
 }
 
 type globalFlags struct {
-	command string
-
 	verbose bool
 
 	conn       string
@@ -49,35 +47,33 @@ type globalFlags struct {
 	connParams connParams
 }
 
-func newGlobalFlags(command string) *globalFlags {
+func newGlobalFlags() *globalFlags {
 	return &globalFlags{
-		command:    command,
-		conn:       "",
 		connParams: newConnParams(),
 	}
 }
 
-func (gf *globalFlags) name() string {
+func (gf *globalFlags) Name() string {
 	return globalOptionsName
 }
 
-func (gf *globalFlags) canHaveExtraArgs() bool {
+func (gf *globalFlags) CanHaveExtraArgs() bool {
 	return true
 }
 
-func (gf *globalFlags) preParseArgs(args []string) []string {
+func (gf *globalFlags) PreParseArgs(args []string) []string {
 	if len(args) == 0 {
 		return []string{"-h"}
 	}
 	return args
 }
 
-func (gf *globalFlags) usage(out io.Writer, fs *flag.FlagSet) {
+func (gf *globalFlags) Usage(out io.Writer, fs *flag.FlagSet) {
 	fmt.Fprintf(out, "%v:\n", globalOptionsName)
 	fs.PrintDefaults()
 }
 
-func (gf *globalFlags) set(fs *flag.FlagSet) {
+func (gf *globalFlags) Set(fs *flag.FlagSet) {
 	fs.BoolVar(&gf.verbose, "v", DefaultVerbose, "print verbose output")
 	fs.StringVar(&gf.conn, "conn", DefaultConnectionFilePath, "path to connection file")
 	fs.StringVar(&gf.dbms, "dbms", DefaultDBMS, "the type of the dbms to connect to. this will override the value in -conn if not default")

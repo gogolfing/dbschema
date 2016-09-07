@@ -1,9 +1,7 @@
 package cli
 
 import (
-	"bytes"
 	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -36,13 +34,13 @@ func NewCLI(command string, out, outErr io.Writer) *CLI {
 }
 
 func (c *CLI) Run(args []string) error {
-	gf, subCommandArgs, err := c.runGlobalFlags(args)
+	gf, subCommandArgs, err := c.parseGlobalFlags(args)
 	if err != nil {
 		return ErrGlobalFlagParsingFailed
 	}
 	fmt.Fprintln(ioutil.Discard, gf, subCommandArgs)
 
-	sc, err := c.runSubCommand(subCommandArgs)
+	sc, err := c.parseSubCommand(subCommandArgs)
 	if err != nil {
 		return ErrSubCommandFlagParsingFailed
 	}
@@ -50,7 +48,7 @@ func (c *CLI) Run(args []string) error {
 
 	logger := c.createLogger(gf)
 
-	if !sc.needsDBSchema() {
+	if !sc.NeedsDBSchema() {
 		return c.runWithoutDBSChema(sc, logger)
 	}
 
@@ -73,7 +71,7 @@ func (c *CLI) Run(args []string) error {
 	return nil
 }
 
-func (c *CLI) runGlobalFlags(args []string) (gf *globalFlags, subCommandArgs []string, err error) {
+func (c *CLI) parseGlobalFlags(args []string) (gf *globalFlags, subCommandArgs []string, err error) {
 	defer func() {
 		if err != nil {
 			c.printCommandUsage()
@@ -81,12 +79,12 @@ func (c *CLI) runGlobalFlags(args []string) (gf *globalFlags, subCommandArgs []s
 			printSubCommandsUsage(c.outErr)
 		}
 	}()
-	gf = newGlobalFlags(c.command)
+	gf = newGlobalFlags()
 	subCommandArgs, err = parseFlagSetter(gf, args)
 	return
 }
 
-func (c *CLI) runSubCommand(args []string) (sc subCommand, err error) {
+func (c *CLI) parseSubCommand(args []string) (sc SubCommand, err error) {
 	defer func() {
 		if err != nil {
 			c.printCommandUsage()
@@ -95,7 +93,7 @@ func (c *CLI) runSubCommand(args []string) (sc subCommand, err error) {
 				fmt.Fprintln(c.outErr, "\n")
 				printSubCommandsUsage(c.outErr)
 			} else {
-				fmt.Fprintf(c.outErr, "\n%v\n", strings.TrimLeft(sc.long(), "\n"))
+				fmt.Fprintf(c.outErr, "\n%v\n", strings.TrimLeft(sc.LongDescription(), "\n"))
 			}
 		}
 	}()
@@ -119,8 +117,8 @@ func (c *CLI) createLogger(gf *globalFlags) logger.Logger {
 	return logger.NewLoggerWriters(verbose, c.out, c.out, c.outErr)
 }
 
-func (c *CLI) runWithoutDBSChema(sc subCommand, logger logger.Logger) error {
-	return sc.execute(nil, logger)
+func (c *CLI) runWithoutDBSChema(sc SubCommand, logger logger.Logger) error {
+	return sc.Execute(nil, logger)
 }
 
 func (c *CLI) createConnection(gf *globalFlags) (*conn.Connection, error) {
@@ -163,34 +161,4 @@ func (c *CLI) printCommandUsage() {
 
 func (c *CLI) printlnError(err error) {
 	fmt.Fprintln(c.outErr, err)
-}
-
-type flagSetter interface {
-	name() string
-	canHaveExtraArgs() bool
-	preParseArgs([]string) []string
-	usage(io.Writer, *flag.FlagSet)
-	set(*flag.FlagSet)
-}
-
-func parseFlagSetter(setter flagSetter, args []string) ([]string, error) {
-	fs := flag.NewFlagSet(setter.name(), flag.ContinueOnError)
-	fs.SetOutput(ioutil.Discard)
-
-	setter.set(fs)
-
-	out := bytes.NewBuffer([]byte{})
-	args = setter.preParseArgs(args)
-	if err := fs.Parse(args); err != nil {
-		if err != flag.ErrHelp {
-			fmt.Fprintf(out, "%v\n\n", err)
-		}
-		fs.SetOutput(out)
-		setter.usage(out, fs)
-	}
-
-	if out.Len() != 0 {
-		return fs.Args(), fmt.Errorf("%v", out.String())
-	}
-	return fs.Args(), nil
 }

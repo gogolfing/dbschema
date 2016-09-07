@@ -9,22 +9,22 @@ type Logger interface {
 	Verbose() io.Writer
 	Info() io.Writer
 	Success() io.Writer
-	Error() io.Writer
+	Warning() io.Writer
 }
 
 type logger struct {
 	verbose io.Writer
 	info    io.Writer
 	success io.Writer
-	err     io.Writer
+	warning io.Writer
 }
 
-func NewLoggerWriters(v, i, s, e io.Writer) Logger {
+func NewLoggerWriters(v, i, s, w io.Writer) Logger {
 	return &logger{
 		verbose: v,
 		info:    i,
 		success: s,
-		err:     e,
+		warning: w,
 	}
 }
 
@@ -40,8 +40,8 @@ func (l *logger) Success() io.Writer {
 	return discardOrNil(l.success)
 }
 
-func (l *logger) Error() io.Writer {
-	return discardOrNil(l.err)
+func (l *logger) Warning() io.Writer {
+	return discardOrNil(l.warning)
 }
 
 func discardOrNil(w io.Writer) io.Writer {
