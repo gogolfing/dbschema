@@ -88,12 +88,12 @@ func printSubCommandsUsage(out io.Writer) {
 	sort.Strings(names)
 	fmt.Fprintf(out, "sub-commands:\n")
 	for _, name := range names {
-		fmt.Fprintf(out, "  %v%v%v\n", name, pad(name), shorts[name])
+		fmt.Fprintf(out, "  %v%v%v\n", name, pad(12, name), shorts[name])
 	}
 }
 
-func pad(name string) string {
-	count := 12 - len(name)
+func pad(count int, name string) string {
+	count = count - len(name)
 	result := ""
 	for count > 0 {
 		result = result + " "

@@ -7,7 +7,6 @@ import (
 
 	"github.com/gogolfing/dbschema/conn"
 	"github.com/gogolfing/dbschema/dialect"
-	"github.com/gogolfing/dbschema/refactor"
 )
 
 type ErrUnsupportedDialect string
@@ -19,7 +18,7 @@ func (e ErrUnsupportedDialect) Error() string {
 type DB interface {
 	Begin() (*sql.Tx, error)
 	Ping() error
-	Exec(stmt refactor.Stmt, args ...interface{}) (sql.Result, error)
+	Exec(query string, args ...interface{}) (sql.Result, error)
 
 	QueryDB
 
@@ -27,8 +26,8 @@ type DB interface {
 }
 
 type QueryDB interface {
-	Query(stmt refactor.Stmt, args ...interface{}) (*sql.Rows, error)
-	QueryRow(stmt refactor.Stmt, args ...interface{}) *sql.Row
+	Query(query string, args ...interface{}) (*sql.Rows, error)
+	QueryRow(query string, args ...interface{}) *sql.Row
 }
 
 type sqlDB struct {
@@ -62,16 +61,16 @@ func (s *sqlDB) Ping() error {
 	return s.db.Ping()
 }
 
-func (s *sqlDB) Exec(stmt refactor.Stmt, args ...interface{}) (sql.Result, error) {
-	return s.db.Exec(stmt.String(), args...)
+func (s *sqlDB) Exec(query string, args ...interface{}) (sql.Result, error) {
+	return s.db.Exec(query, args...)
 }
 
-func (s *sqlDB) Query(stmt refactor.Stmt, args ...interface{}) (*sql.Rows, error) {
-	return s.db.Query(stmt.String(), args...)
+func (s *sqlDB) Query(query string, args ...interface{}) (*sql.Rows, error) {
+	return s.db.Query(query, args...)
 }
 
-func (s *sqlDB) QueryRow(stmt refactor.Stmt, args ...interface{}) *sql.Row {
-	return s.db.QueryRow(stmt.String(), args...)
+func (s *sqlDB) QueryRow(query string, args ...interface{}) *sql.Row {
+	return s.db.QueryRow(query, args...)
 }
 
 func (s *sqlDB) Close() error {

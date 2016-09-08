@@ -1,0 +1,12 @@
+<ChangeLog>
+    <ChangeSet id="examples.0" author="examples.user" name="examples.first">
+        <RawSql>
+            <Up>
+                <Stmt>select CURRENT_DATE</Stmt>
+            </Up>
+            <Down>
+                <Stmt>select CURRENT_DATE</Stmt>
+            </Down>
+        </RawSql>
+    </ChangeSet>
+</ChangeLog>

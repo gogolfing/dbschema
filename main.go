@@ -11,9 +11,14 @@ const (
 	ExitCodeUnknownError = 1
 
 	ExitCodeParsingGlobalFlagsFailed = 2
-	ExitCodeCreatingConnectionFailed = 3
-	ExitCodeUnsupportedDBMS          = 4
 	ExitCodeParsingSubCommandFailed  = 5
+
+	ExitCodeCreatingConnectionFailed = 3
+	ExitCodeCreatingChangeLogFailed  = 6
+
+	ExitCodeUnsupportedDBMS = 4
+
+	ExitCodeOpenDBSchemaFailed = 7
 )
 
 var cliArgs = os.Args[1:]
@@ -40,8 +45,12 @@ var exitError = func(exit func(int), getCode func(error) int, err error) {
 var getCode = func(err error) int {
 	errCodes := map[error]int{
 		cli.ErrGlobalFlagParsingFailed:     ExitCodeParsingGlobalFlagsFailed,
-		cli.ErrCreatingConnectionFailed:    ExitCodeCreatingConnectionFailed,
 		cli.ErrSubCommandFlagParsingFailed: ExitCodeParsingSubCommandFailed,
+
+		cli.ErrCreatingConnectionFailed: ExitCodeCreatingConnectionFailed,
+		cli.ErrCreatingChangeLogFailed:  ExitCodeCreatingChangeLogFailed,
+
+		cli.ErrOpeningDBSchemaFailed: ExitCodeOpenDBSchemaFailed,
 	}
 
 	code, ok := errCodes[err]

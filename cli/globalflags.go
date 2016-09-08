@@ -9,6 +9,7 @@ import (
 const (
 	DefaultVerbose            = false
 	DefaultConnectionFilePath = "connection.xml"
+	DefaultChangeLogFilePath  = "changelog.xml"
 	DefaultDBMS               = ""
 	DefaultHost               = ""
 	DefaultPort               = 0
@@ -39,6 +40,7 @@ type globalFlags struct {
 	verbose bool
 
 	conn       string
+	changeLog  string
 	dbms       string
 	host       string
 	port       int
@@ -76,6 +78,7 @@ func (gf *globalFlags) Usage(out io.Writer, fs *flag.FlagSet) {
 func (gf *globalFlags) Set(fs *flag.FlagSet) {
 	fs.BoolVar(&gf.verbose, "v", DefaultVerbose, "print verbose output")
 	fs.StringVar(&gf.conn, "conn", DefaultConnectionFilePath, "path to connection file")
+	fs.StringVar(&gf.changeLog, "changelog", DefaultChangeLogFilePath, "path to change log file")
 	fs.StringVar(&gf.dbms, "dbms", DefaultDBMS, "the type of the dbms to connect to. this will override the value in -conn if not default")
 	fs.StringVar(&gf.host, "host", DefaultHost, "host to connect to. this will override the value in -conn if not empty")
 	fs.IntVar(&gf.port, "port", DefaultPort, "port to connect to. this will override the value in -conn if not empty")

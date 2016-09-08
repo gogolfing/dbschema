@@ -48,6 +48,5 @@ func (sf *statusFlags) Usage(out io.Writer, _ *flag.FlagSet) {
 }
 
 func status(dbschema *dbschema.DBSchema, logger logger.Logger) error {
-	err := fmt.Errorf("unimplemented")
-	return err
+	return dbschema.Status(logger)
 }

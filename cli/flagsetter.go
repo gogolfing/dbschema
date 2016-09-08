@@ -33,7 +33,7 @@ func (fss *flagSetterStruct) PreParseArgs(args []string) []string {
 	return args
 }
 
-func (fss *flagSetterStruct) Set(fs *flag.FlagSet) {}
+func (fss *flagSetterStruct) Set(_ *flag.FlagSet) {}
 
 func parseFlagSetter(setter FlagSetter, args []string) ([]string, error) {
 	fs := flag.NewFlagSet(setter.Name(), flag.ContinueOnError)

@@ -14,8 +14,9 @@ func newPostgresqlConnectionString(conn *conn.Connection) (string, error) {
 
 func newPostgresqlDialectStruct() *DialectStruct {
 	return &DialectStruct{
-		QuoteRefValue: `"`,
+		DBMSValue: Postgresql,
 
+		QuoteRefValue:   `"`,
 		QuoteConstValue: "'",
 
 		IntValue: "INTEGER",

@@ -1,5 +1,5 @@
 <Connection
-    dbms="${DBMS} "
+    dbms="${DBMS}"
     user="dbschema_user"
 >
     <Param name="example_parameter" value="example_value" />

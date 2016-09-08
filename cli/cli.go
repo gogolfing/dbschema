@@ -4,18 +4,25 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"strings"
 
 	"github.com/gogolfing/dbschema/conn"
+	"github.com/gogolfing/dbschema/dbschema"
 	"github.com/gogolfing/dbschema/dialect"
 	"github.com/gogolfing/dbschema/logger"
+	"github.com/gogolfing/dbschema/refactor"
 )
 
 var (
 	ErrGlobalFlagParsingFailed     = errors.New("dbschema/cli: parsing global flags failed")
-	ErrCreatingConnectionFailed    = errors.New("dbschmea/cli: could not create connection")
 	ErrSubCommandFlagParsingFailed = errors.New("dbschema/cli: parsing command flags failed")
+
+	ErrCreatingConnectionFailed = errors.New("dbschema/cli: could not create Connection")
+	ErrCreatingChangeLogFailed  = errors.New("dbschemacli: could not create ChangeLog")
+
+	ErrOpeningDBSchemaFailed = errors.New("dbschema/cli: count not open DBSchema")
+
+	ErrExecutingSubCommandFailed = fmt.Errorf("dbschema/cli: executing %v failed", subCommandName)
 )
 
 type CLI struct {
@@ -38,37 +45,48 @@ func (c *CLI) Run(args []string) error {
 	if err != nil {
 		return ErrGlobalFlagParsingFailed
 	}
-	fmt.Fprintln(ioutil.Discard, gf, subCommandArgs)
 
 	sc, err := c.parseSubCommand(subCommandArgs)
 	if err != nil {
 		return ErrSubCommandFlagParsingFailed
 	}
-	fmt.Fprintln(ioutil.Discard, sc)
 
 	logger := c.createLogger(gf)
 
 	if !sc.NeedsDBSchema() {
-		return c.runWithoutDBSChema(sc, logger)
+		return c.runWithDBSChema(sc, nil, logger)
 	}
 
-	/*
-		conn, err := c.createConnection(gf)
-		if err != nil {
-			c.printlnError(err)
-			return ErrCreatingConnectionFailed
-		}
-		fmt.Println(conn)
+	conn, err := c.createConnection(gf)
+	if err != nil {
+		c.printlnError(err)
+		return ErrCreatingConnectionFailed
+	}
 
-		dialect, err := c.createDialect(conn)
-		if err != nil {
-			c.printlnError(err)
-			return err
-		}
-		fmt.Println(dialect)
-	*/
+	dialect, err := c.createDialect(conn)
+	if err != nil {
+		c.printlnError(err)
+		return err
+	}
 
-	return nil
+	changeLog, err := c.createChangeLog(gf)
+	if err != nil {
+		c.printlnError(err)
+		return ErrCreatingChangeLogFailed
+	}
+
+	dbschema, err := c.createDBSchema(dialect, conn, changeLog)
+	if err != nil {
+		c.printlnError(err)
+		return ErrOpeningDBSchemaFailed
+	}
+	defer func() {
+		if err := dbschema.Close(); err != nil {
+			c.printlnError(err)
+		}
+	}()
+
+	return c.runWithDBSChema(sc, dbschema, logger)
 }
 
 func (c *CLI) parseGlobalFlags(args []string) (gf *globalFlags, subCommandArgs []string, err error) {
@@ -117,10 +135,6 @@ func (c *CLI) createLogger(gf *globalFlags) logger.Logger {
 	return logger.NewLoggerWriters(verbose, c.out, c.out, c.outErr)
 }
 
-func (c *CLI) runWithoutDBSChema(sc SubCommand, logger logger.Logger) error {
-	return sc.Execute(nil, logger)
-}
-
 func (c *CLI) createConnection(gf *globalFlags) (*conn.Connection, error) {
 	conn, err := conn.NewConnectionFile(gf.conn)
 	if err != nil {
@@ -153,6 +167,24 @@ func (c *CLI) createDialect(conn *conn.Connection) (dialect.Dialect, error) {
 		return nil, err
 	}
 	return dialect.NewDialect(dbms)
+}
+
+func (c *CLI) createChangeLog(gf *globalFlags) (*refactor.ChangeLog, error) {
+	return refactor.NewChangeLogFile(gf.changeLog)
+}
+
+func (c *CLI) createDBSchema(dialect dialect.Dialect, conn *conn.Connection, changeLog *refactor.ChangeLog) (*dbschema.DBSchema, error) {
+	dbschema, err := dbschema.OpenSql(dialect, conn, changeLog)
+	return dbschema, err
+}
+
+func (c *CLI) runWithDBSChema(sc SubCommand, dbschema *dbschema.DBSchema, logger logger.Logger) error {
+	err := sc.Execute(dbschema, logger)
+	if err != nil {
+		c.printlnError(err)
+		return ErrExecutingSubCommandFailed
+	}
+	return nil
 }
 
 func (c *CLI) printCommandUsage() {

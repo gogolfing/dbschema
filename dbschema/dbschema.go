@@ -59,6 +59,11 @@ func (d *DBSchema) Expand(expr string) (value string, err error) {
 }
 
 func (d *DBSchema) init() error {
+	rows, err := d.db.Query("select CURRENT_DATE")
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
 	return nil
 }
 
