@@ -2,7 +2,9 @@ package conn
 
 import (
 	"encoding/xml"
+	"fmt"
 	"io"
+	"net/url"
 	"os"
 
 	"github.com/gogolfing/dbschema/vars"
@@ -20,6 +22,8 @@ type Connection struct {
 	User string `xml:"user,attr"`
 
 	Password string `xml:"password,attr"`
+
+	Database string `xml:"database,attr"`
 
 	params map[string]string
 }
@@ -50,12 +54,43 @@ func (c *Connection) HostValue() (string, error) {
 	return possibleVariable(c.Host)
 }
 
+func (c *Connection) HostPort(defaultPort int) (string, error) {
+	port := c.Port
+	if port == 0 {
+		port = defaultPort
+	}
+	host, err := c.HostValue()
+	if err != nil {
+		return "", err
+	}
+	return host + ":" + fmt.Sprint(port), nil
+}
+
 func (c *Connection) UserValue() (string, error) {
 	return possibleVariable(c.User)
 }
 
 func (c *Connection) PasswordValue() (string, error) {
 	return possibleVariable(c.Password)
+}
+
+func (c *Connection) Userinfo() (*url.Userinfo, error) {
+	user, err := c.UserValue()
+	if err != nil {
+		return nil, err
+	}
+	password, err := c.PasswordValue()
+	if err != nil {
+		return nil, err
+	}
+	if password == "" {
+		return url.User(user), nil
+	}
+	return url.UserPassword(user, password), nil
+}
+
+func (c *Connection) DatabaseValue() (string, error) {
+	return possibleVariable(c.Database)
 }
 
 func (c *Connection) PutParam(name, value string) {

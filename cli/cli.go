@@ -155,6 +155,9 @@ func (c *CLI) createConnection(gf *globalFlags) (*conn.Connection, error) {
 	if gf.password != DefaultPassword {
 		conn.Password = gf.password
 	}
+	if gf.database != DefaultDatabase {
+		conn.Database = gf.database
+	}
 	gf.connParams.eachParamValue(func(name, value string) {
 		conn.PutParam(name, value)
 	})
@@ -173,9 +176,12 @@ func (c *CLI) createChangeLog(gf *globalFlags) (*refactor.ChangeLog, error) {
 	return refactor.NewChangeLogFile(gf.changeLog)
 }
 
-func (c *CLI) createDBSchema(dialect dialect.Dialect, conn *conn.Connection, changeLog *refactor.ChangeLog) (*dbschema.DBSchema, error) {
-	dbschema, err := dbschema.OpenSql(dialect, conn, changeLog)
-	return dbschema, err
+func (c *CLI) createDBSchema(
+	dialect dialect.Dialect,
+	conn *conn.Connection,
+	changeLog *refactor.ChangeLog,
+) (*dbschema.DBSchema, error) {
+	return dbschema.OpenSql(dialect, conn, changeLog)
 }
 
 func (c *CLI) runWithDBSChema(sc SubCommand, dbschema *dbschema.DBSchema, logger logger.Logger) error {

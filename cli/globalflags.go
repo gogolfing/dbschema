@@ -15,6 +15,7 @@ const (
 	DefaultPort               = 0
 	DefaultUser               = ""
 	DefaultPassword           = ""
+	DefaultDatabase           = ""
 )
 
 const (
@@ -46,6 +47,7 @@ type globalFlags struct {
 	port       int
 	user       string
 	password   string
+	database   string
 	connParams connParams
 }
 
@@ -84,5 +86,6 @@ func (gf *globalFlags) Set(fs *flag.FlagSet) {
 	fs.IntVar(&gf.port, "port", DefaultPort, "port to connect to. this will override the value in -conn if not empty")
 	fs.StringVar(&gf.user, "user", DefaultUser, "user to connect as. this will override the value in -conn if not empty")
 	fs.StringVar(&gf.password, "password", DefaultPassword, "password to connect with. this will override the value in -conn if not empty")
+	fs.StringVar(&gf.database, "database", DefaultDatabase, "database to connect to. this will override the value in -conn if not empty")
 	fs.Var(&gf.connParams, "conn-param", "list of connection parameters in the form of <name>=<value>. should be set with multiple flag definitions. these will override already set parameters in -conn")
 }

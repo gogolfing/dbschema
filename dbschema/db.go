@@ -46,6 +46,7 @@ func openSqlDB(d dialect.Dialect, conn *conn.Connection) (DB, error) {
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("openSqlDB()", connString)
 	db, err := sql.Open(driverName, connString)
 	if err != nil {
 		return nil, err
