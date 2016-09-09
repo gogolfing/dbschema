@@ -27,11 +27,16 @@ func newPostgresqlConnectionString(conn *conn.Connection) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	rawQuery, err := conn.Query()
+	if err != nil {
+		return "", err
+	}
 	url := &url.URL{
-		Scheme: "postgres",
-		User:   user,
-		Host:   host,
-		Path:   path,
+		Scheme:   "postgres",
+		User:     user,
+		Host:     host,
+		Path:     path,
+		RawQuery: rawQuery,
 	}
 	return url.String(), nil
 }

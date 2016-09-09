@@ -58,6 +58,7 @@ func TestNewChangeLogFile(t *testing.T) {
 	changeLog, err := NewChangeLogFile(changeLogFile.Name())
 	if err != nil {
 		t.Fatal(err)
+		t.FailNow()
 	}
 
 	//the following checks are done in separation because we cannot create a
@@ -70,8 +71,8 @@ func TestNewChangeLogFile(t *testing.T) {
 
 	//make sure variables are all what they should be.
 	testVariablesEqual(t, changeLog,
-		"varNameOne", "varValueOne",
-		"varNameTwo", "varValueTwo",
+		"{varNameOne}", "varValueOne",
+		"{varNameTwo}", "varValueTwo",
 	)
 
 	//make sure ChangeSets are what they should be.
@@ -85,19 +86,10 @@ func TestNewChangeLogFile(t *testing.T) {
 	}
 }
 
-func writeFile(t *testing.T, file *os.File, source string) {
-	if _, err := file.WriteString(source); err != nil {
-		t.Fatal(err)
-	}
-	if err := file.Close(); err != nil {
-		t.Fatal(err)
-	}
-}
-
 func testVariablesEqual(t *testing.T, c *ChangeLog, vars ...string) {
 	for i := 0; i < len(vars); i += 2 {
 		name, value := vars[i], vars[i+1]
-		if actual, err := c.Variables.Get(name); actual != value || err != nil {
+		if actual, err := c.Variables.Dereference(name); actual != value || err != nil {
 			t.Errorf("c.Variables.Get(%v) = %v, %v WANT %v, %v", name, actual, err, value, nil)
 		}
 	}

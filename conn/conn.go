@@ -98,10 +98,23 @@ func (c *Connection) PutParam(name, value string) {
 	c.params[name] = value
 }
 
-func (c *Connection) EachParamValue(visitor func(name, value string)) {
+func (c *Connection) Query() (string, error) {
+	values := url.Values{}
+	err := c.EachParamValue(func(name, value string) {
+		values.Add(name, value)
+	})
+	return values.Encode(), err
+}
+
+func (c *Connection) EachParamValue(visitor func(name, value string)) error {
 	for name, value := range c.params {
-		visitor(name, value)
+		actualValue, err := possibleVariable(value)
+		if err != nil {
+			return err
+		}
+		visitor(name, actualValue)
 	}
+	return nil
 }
 
 func (c *Connection) UnmarshalXML(dec *xml.Decoder, start xml.StartElement) error {
@@ -122,6 +135,7 @@ func (c *Connection) UnmarshalXML(dec *xml.Decoder, start xml.StartElement) erro
 	c.Port = xmlC.Port
 	c.User = xmlC.User
 	c.Password = xmlC.Password
+	c.Database = xmlC.Database
 
 	for _, param := range xmlC.Params {
 		c.PutParam(param.Name, param.Value)
@@ -147,6 +161,8 @@ type xmlConnection struct {
 	User string `xml:"user,attr"`
 
 	Password string `xml:"password,attr"`
+
+	Database string `xml:"database,attr"`
 
 	Params []*Param `xml:"Param"`
 }

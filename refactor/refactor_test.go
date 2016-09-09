@@ -2,6 +2,7 @@ package refactor
 
 import (
 	"encoding/xml"
+	"os"
 	"strings"
 	"testing"
 )
@@ -33,6 +34,15 @@ func decodeSourceIntoValueError(t *testing.T, value interface{}, source string) 
 
 func newString(s string) *string {
 	return &s
+}
+
+func writeFile(t *testing.T, file *os.File, source string) {
+	if _, err := file.WriteString(source); err != nil {
+		t.Fatal(err)
+	}
+	if err := file.Close(); err != nil {
+		t.Fatal(err)
+	}
 }
 
 /*
