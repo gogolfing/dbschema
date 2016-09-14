@@ -10,7 +10,7 @@ const (
 )
 
 type Validator interface {
-	Validate(ctx Context) error
+	Validate() error
 }
 
 type ErrInvalid string

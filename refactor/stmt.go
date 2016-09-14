@@ -9,7 +9,7 @@ func (s Stmt) String() string {
 type StmtsFunc func(ctx Context) ([]Stmt, error)
 
 func (f StmtsFunc) Validated(v Validator, ctx Context) ([]Stmt, error) {
-	if err := v.Validate(ctx); err != nil {
+	if err := v.Validate(); err != nil {
 		return nil, err
 	}
 	return f(ctx)

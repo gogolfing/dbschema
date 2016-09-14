@@ -14,7 +14,7 @@ type RawSql struct {
 	DownStmts []Stmt `xml:"Down>Stmt"`
 }
 
-func (r *RawSql) Validate(ctx Context) error {
+func (r *RawSql) Validate() error {
 	if len(r.UpStmts) == 0 {
 		return errUpMustBeNonEmpty
 	}

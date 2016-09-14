@@ -1,40 +1,46 @@
 package refactor
 
-// import (
-// 	"encoding/xml"
-// 	"fmt"
-// )
+import (
+	"encoding/xml"
 
-// type CreateTable struct {
-// 	XMLName xml.Name `xml:"CreateTable"`
+	"github.com/gogolfing/dbschema/dialect"
+	"github.com/gogolfing/dbschema/refactor/strval"
+)
 
-// 	Name string `xml:"name,attr"`
+type CreateTable struct {
+	XMLName xml.Name `xml:"CreateTable"`
 
-// 	Columns []*Column `xml:"Columns"`
-// }
+	Name string `xml:"name,attr"`
 
-// func (a *CreateTable) Up(ctx *Context) (stmts []string, err error) {
-// 	if err := a.Validate(); err != nil {
-// 		return nil, err
-// 	}
-// 	return StmtsFromFuncs(ctx, a.upTable)
-// }
+	IfNotExists *string `xml:"ifNotExists,attr"`
 
-// func (a *CreateTable) upTable(ctx *Context) (string, error) {
-// 	columns, err := a.upColumns(ctx)
-// 	if err != nil {
-// 		return "", err
-// 	}
-// 	return fmt.Sprintf("%v %v (%v)", ctx.CreateTable, a.Name, columns), nil
-// }
+	Columns []*Column `xml:"Columns"`
+}
 
-// func (a *CreateTable) upColumns(ctx *Context) (string, error) {
-// 	return "", nil
-// }
+func (c *CreateTable) Validate() error {
+	if c.Name == "" {
+		return ErrInvalid("CreateTable.Name cannot be empty")
+	}
+	if err := strval.ValidateBool(c.IfNotExists); err != nil {
+		return err
+	}
+	for _, col := range c.Columns {
+		if err := col.Validate(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
-// func (a *CreateTable) Validate() error {
-// 	if a.Name == "" {
-// 		return ErrInvalid("CreateTable.Name cannot be empty")
-// 	}
-// 	return nil
-// }
+func (c *CreateTable) Up(ctx Context) ([]Stmt, error) {
+	return StmtsFunc(c.up).Validated(c, ctx)
+}
+
+func (c *CreateTable) up(ctx Context) ([]Stmt, error) {
+	result := dialect.CreateTable
+	return []Stmt{Stmt(result)}, nil
+}
+
+func (c *CreateTable) Down(ctx Context) ([]Stmt, error) {
+	return nil, nil
+}

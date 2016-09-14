@@ -48,7 +48,32 @@ func newPostgresqlDialectStruct() *DialectStruct {
 		QuoteRefValue:   `"`,
 		QuoteConstValue: "'",
 
-		IntValue: "INTEGER",
+		IntegerValue: "INTEGER",
+		// Int8Value not implemented.
+		Int16Value: "SMALLINT",
+		Int32Value: "INTEGER",
+		Int64Value: "BIGINT",
+
+		Float32Value: "REAL",
+		Float64Value: "DOUBLE PRECISION",
+
+		Char64Value:  "CHARACTER(64)",
+		Char128Value: "CHARACTER(128)",
+		Char256Value: "CHARACTER(256)",
+
+		VarChar64Value:  "CHARACTER VARYING(64)",
+		VarChar128Value: "CHARACTER VARYING(128)",
+		VarChar256Value: "CHARACTER VARYING(256)",
+
+		TextValue: "TEXT",
+
+		TimestampValue:   "TIMESTAMP",
+		TimestampTzValue: "TIMESTAMP WITH TIME ZONE",
+		TimeValue:        "TIME",
+		TimeTzValue:      "TIME WITH TIME ZONE",
+		DateValue:        "DATE",
+
+		BoolValue: "BOOLEAN",
 
 		UUIDValue: "UUID",
 	}

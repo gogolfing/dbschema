@@ -1,44 +1,34 @@
 package refactor
 
-// import (
-// 	"encoding/xml"
-// 	"fmt"
-// )
+import (
+	"encoding/xml"
+	"fmt"
 
-// type Constraint struct {
-// 	XMLName xml.Name `xml:"Constraint"`
+	"github.com/gogolfing/dbschema/refactor/strval"
+)
 
-// 	IsUnique   *string `xml:"isUnique,attr"`
-// 	UniqueName *string `xml:"uniqueName,attr"`
+type Constraint struct {
+	XMLName xml.Name `xml:"Constraint"`
 
-// 	IsPrimary   *string `xml:"isPrimary,attr"`
-// 	PrimaryName *string `xml:"primaryName,attr"`
+	IsUnique   *string `xml:"isUnique,attr"`
+	UniqueName *string `xml:"uniqueName,attr"`
 
-// 	IsForeign   *string `xml:"isForeign,attr"`
-// 	ForeignName *string `xml:"foreignName,attr"`
-// }
+	IsPrimary   *string `xml:"isPrimary,attr"`
+	PrimaryName *string `xml:"primaryName,attr"`
 
-// func (c *Constraint) IsUniqueBool() bool {
-// 	return StringDefaultBool(c.IsUnique, false)
-// }
+	IsForeign   *string `xml:"isForeign,attr"`
+	ForeignName *string `xml:"foreignName,attr"`
+}
 
-// func (c *Constraint) IsPrimaryBool() bool {
-// 	return StringDefaultBool(c.IsPrimary, false)
-// }
-
-// func (c *Constraint) IsForeignBool() bool {
-// 	return StringDefaultBool(c.IsForeign, false)
-// }
-
-// func (c *Constraint) Validate() error {
-// 	if err := ValidateStringBool(c.IsUnique); err != nil {
-// 		return fmt.Errorf("Constraint.isUnique %v", err)
-// 	}
-// 	if err := ValidateStringBool(c.IsPrimary); err != nil {
-// 		return fmt.Errorf("Constraint.isPrimary %v", err)
-// 	}
-// 	if err := ValidateStringBool(c.IsForeign); err != nil {
-// 		return fmt.Errorf("Constraint.isForeign %v", err)
-// 	}
-// 	return nil
-// }
+func (c *Constraint) Validate() error {
+	if err := strval.ValidateBool(c.IsUnique); err != nil {
+		return fmt.Errorf("Constraint.isUnique %v", err)
+	}
+	if err := strval.ValidateBool(c.IsPrimary); err != nil {
+		return fmt.Errorf("Constraint.isPrimary %v", err)
+	}
+	if err := strval.ValidateBool(c.IsForeign); err != nil {
+		return fmt.Errorf("Constraint.isForeign %v", err)
+	}
+	return nil
+}

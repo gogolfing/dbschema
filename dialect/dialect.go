@@ -44,7 +44,32 @@ type Dialect interface {
 
 	//Following are the "variable" methods.
 
-	Int() (string, error)
+	Integer() (string, error)
+	Int8() (string, error)
+	Int16() (string, error)
+	Int32() (string, error)
+	Int64() (string, error)
+
+	Float32() (string, error)
+	Float64() (string, error)
+
+	Char64() (string, error)
+	Char128() (string, error)
+	Char256() (string, error)
+
+	VarChar64() (string, error)
+	VarChar128() (string, error)
+	VarChar256() (string, error)
+
+	Text() (string, error)
+
+	Timestamp() (string, error)
+	TimestampTz() (string, error)
+	Time() (string, error)
+	TimeTz() (string, error)
+	Date() (string, error)
+
+	Bool() (string, error)
 
 	UUID() (string, error)
 }
@@ -115,7 +140,32 @@ type DialectStruct struct {
 
 	QuoteConstValue string
 
-	IntValue string
+	IntegerValue string
+	Int8Value    string
+	Int16Value   string
+	Int32Value   string
+	Int64Value   string
+
+	Float32Value string
+	Float64Value string
+
+	Char64Value  string
+	Char128Value string
+	Char256Value string
+
+	VarChar64Value  string
+	VarChar128Value string
+	VarChar256Value string
+
+	TextValue string
+
+	TimestampValue   string
+	TimestampTzValue string
+	TimeValue        string
+	TimeTzValue      string
+	DateValue        string
+
+	BoolValue string
 
 	UUIDValue string
 }
@@ -132,8 +182,84 @@ func (d *DialectStruct) QuoteConst(in string) string {
 	return Quote(in, d.QuoteConstValue)
 }
 
-func (d *DialectStruct) Int() (string, error) {
-	return d.validString(d.IntValue)
+func (d *DialectStruct) Integer() (string, error) {
+	return d.validString(d.IntegerValue)
+}
+
+func (d *DialectStruct) Int8() (string, error) {
+	return d.validString(d.Int8Value)
+}
+
+func (d *DialectStruct) Int16() (string, error) {
+	return d.validString(d.Int16Value)
+}
+
+func (d *DialectStruct) Int32() (string, error) {
+	return d.validString(d.Int32Value)
+}
+
+func (d *DialectStruct) Int64() (string, error) {
+	return d.validString(d.Int64Value)
+}
+
+func (d *DialectStruct) Float32() (string, error) {
+	return d.validString(d.Float32Value)
+}
+
+func (d *DialectStruct) Float64() (string, error) {
+	return d.validString(d.Float64Value)
+}
+
+func (d *DialectStruct) Char64() (string, error) {
+	return d.validString(d.Char64Value)
+}
+
+func (d *DialectStruct) Char128() (string, error) {
+	return d.validString(d.Char128Value)
+}
+
+func (d *DialectStruct) Char256() (string, error) {
+	return d.validString(d.Char256Value)
+}
+
+func (d *DialectStruct) VarChar64() (string, error) {
+	return d.validString(d.VarChar64Value)
+}
+
+func (d *DialectStruct) VarChar128() (string, error) {
+	return d.validString(d.VarChar128Value)
+}
+
+func (d *DialectStruct) VarChar256() (string, error) {
+	return d.validString(d.VarChar256Value)
+}
+
+func (d *DialectStruct) Text() (string, error) {
+	return d.validString(d.TextValue)
+}
+
+func (d *DialectStruct) Timestamp() (string, error) {
+	return d.validString(d.TimestampValue)
+}
+
+func (d *DialectStruct) TimestampTz() (string, error) {
+	return d.validString(d.TimestampTzValue)
+}
+
+func (d *DialectStruct) Time() (string, error) {
+	return d.validString(d.TimestampValue)
+}
+
+func (d *DialectStruct) TimeTz() (string, error) {
+	return d.validString(d.TimeTzValue)
+}
+
+func (d *DialectStruct) Date() (string, error) {
+	return d.validString(d.DateValue)
+}
+
+func (d *DialectStruct) Bool() (string, error) {
+	return d.validString(d.BoolValue)
 }
 
 func (d *DialectStruct) UUID() (string, error) {
