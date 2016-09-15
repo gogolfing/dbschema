@@ -4,8 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/gogolfing/dbschema/conn"
+	"github.com/gogolfing/dbschema/vars"
 )
 
 //SQL statements that are the same accross supported dialects.
@@ -83,6 +85,40 @@ func NewDialect(dbms string) (Dialect, error) {
 		return nil, ErrUnsupportedDBMS(dbms)
 	}
 	return d(), nil
+}
+
+const DialectVariablePrefix = "Dialect."
+
+func Expand(expr string, v *vars.Variables, d Dialect) (string, error) {
+	origExpr := expr
+
+	if vars.IsEnvVariableReference(expr) {
+		return vars.DereferenceEnv(expr)
+	}
+	if vars.IsVariableReference(expr) {
+		value, err := v.Dereference(expr)
+		//err will not be vars.ErrInvalidReference because of the prior vars.IsVariableReference() check.
+		if err == nil {
+			return value, nil
+		}
+
+		name := vars.InnerVariableName(expr)
+		if !strings.HasPrefix(name, DialectVariablePrefix) {
+			//not in v and not a Dialect variable.
+			return "", vars.ErrDoesNotExist(origExpr)
+		} else {
+			name = strings.TrimPrefix(name, DialectVariablePrefix)
+		}
+
+		fmt.Println("inner name", name)
+
+		value, err = CallVariableMethodOnDialect(d, name)
+		if err != nil {
+			return "", vars.ErrDoesNotExist(origExpr)
+		}
+		return value, nil
+	}
+	return expr, nil
 }
 
 type dialect struct {
@@ -262,6 +298,7 @@ func (d *DialectStruct) Bool() (string, error) {
 	return d.validString(d.BoolValue)
 }
 
+//UUID returns d.UUIDValue and ErrNotSupported if it is empty.
 func (d *DialectStruct) UUID() (string, error) {
 	return d.validString(d.UUIDValue)
 }

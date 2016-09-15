@@ -45,16 +45,6 @@ func (v *Variables) Put(variable *Variable) {
 	v.values[variable.Name] = variable.Value
 }
 
-func (v *Variables) Expand(expr string) string {
-	origExpr := expr
-	expr = strings.TrimSpace(expr)
-	if !IsVariableReference(expr) && !IsEnvVariableReference(expr) {
-		return origExpr
-	}
-	result, _ := v.Dereference(expr)
-	return result
-}
-
 func (v *Variables) Dereference(expr string) (string, error) {
 	expr = strings.TrimSpace(expr)
 	if IsVariableReference(expr) {
@@ -128,4 +118,15 @@ func IsEnvVariableReference(expr string) bool {
 
 func IsVariableReference(expr string) bool {
 	return referenceRegexp.MatchString(strings.TrimSpace(expr))
+}
+
+func InnerVariableName(expr string) string {
+	trimmed := strings.TrimSpace(expr)
+	if IsEnvVariableReference(expr) {
+		return trimmed[2 : len(trimmed)-1]
+	}
+	if IsVariableReference(expr) {
+		return trimmed[1 : len(trimmed)-1]
+	}
+	return expr
 }

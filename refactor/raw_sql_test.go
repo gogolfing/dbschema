@@ -29,7 +29,6 @@ func TestRawSql_UnmarshalXML(t *testing.T) {
 }
 
 func TestRawSql_Validate(t *testing.T) {
-	ctx := newDefaultTestContext()
 	tests := []struct {
 		*RawSql
 		err error
@@ -55,7 +54,7 @@ func TestRawSql_Validate(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		err := test.RawSql.Validate(ctx)
+		err := test.RawSql.Validate()
 		if !reflect.DeepEqual(err, test.err) {
 			t.Errorf("test.RawSql.Validate() = %v WANT %v", err, test.err)
 		}
@@ -64,10 +63,10 @@ func TestRawSql_Validate(t *testing.T) {
 
 func TestRawSql_Up(t *testing.T) {
 	r := &RawSql{UpStmts: []Stmt{"up"}, DownStmts: []Stmt{"down"}}
-	testStmtsFunc(t, r.Up, newDefaultTestContext(), nil, "up")
+	testStmtsFunc(t, r.Up, defaultTestContext, nil, "up")
 }
 
 func TestRawSql_Down(t *testing.T) {
 	r := &RawSql{UpStmts: []Stmt{"up"}, DownStmts: []Stmt{"down"}}
-	testStmtsFunc(t, r.Down, newDefaultTestContext(), nil, "down")
+	testStmtsFunc(t, r.Down, defaultTestContext, nil, "down")
 }

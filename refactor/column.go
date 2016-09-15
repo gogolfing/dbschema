@@ -31,7 +31,10 @@ func (c *Column) Validate() error {
 	if err := strval.ValidateBool(c.IsNullable); err != nil {
 		return fmt.Errorf("Column.isNullable %v", err)
 	}
-	return c.Constraint.Validate()
+	if c.Constraint != nil {
+		return c.Constraint.Validate()
+	}
+	return nil
 }
 
 func (c *Column) Definition(ctx Context) (string, error) {
@@ -47,7 +50,7 @@ func (c *Column) Definition(ctx Context) (string, error) {
 
 	result := fmt.Sprintf("%v %v", name, t)
 
-	if !strval.Bool(c.IsNullable, false) {
+	if !strval.Bool(c.IsNullable, true) {
 		result = fmt.Sprintf("%v %v", result, dialect.NotNull)
 	}
 	if c.Default != nil {

@@ -54,8 +54,7 @@ func (d *DBSchema) Close() error {
 }
 
 func (d *DBSchema) Expand(expr string) (value string, err error) {
-	value, err = d.changeLog.Variables.Dereference(expr)
-	return
+	return dialect.Expand(expr, d.changeLog.Variables, d.Dialect)
 }
 
 func (d *DBSchema) init() error {

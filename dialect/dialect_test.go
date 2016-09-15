@@ -3,12 +3,18 @@ package dialect
 import (
 	"reflect"
 	"testing"
+
+	"github.com/gogolfing/dbschema/conn"
 )
 
 func TestCallVariableMethodOnDialect(t *testing.T) {
-	d := &DialectStruct{
-		IntValue: "int",
-	}
+	d := newDialect(
+		func(_ *conn.Connection) (string, error) { return "connection_string", nil },
+		&DialectStruct{
+			IntegerValue: "int",
+			BoolValue:    "boolean",
+		},
+	)
 
 	tests := []struct {
 		name      string
@@ -18,7 +24,8 @@ func TestCallVariableMethodOnDialect(t *testing.T) {
 		{"doesNotExist", "", ErrMethodDoesNotExist},
 		{"QuoteRef", "", ErrInvalidVariableMethodType},
 		{"UUID", "", ErrNotSupported},
-		{"Int", "int", nil},
+		{"Integer", "int", nil},
+		{"Bool", "boolean", nil},
 	}
 	for _, test := range tests {
 		result, resultErr := CallVariableMethodOnDialect(d, test.name)
