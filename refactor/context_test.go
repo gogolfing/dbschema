@@ -64,6 +64,10 @@ func newDefaultDialectStruct() *dialect.DialectStruct {
 		QuoteRefValue:   `"`,
 		QuoteConstValue: "'",
 
+		Escapes: newDefaultTestEscapes(),
+
+		Caster: dialect.DoubleColonCaster,
+
 		IntegerValue: "test_integer",
 		Int8Value:    "test_int8",
 		Int16Value:   "test_int16",
@@ -93,4 +97,10 @@ func newDefaultDialectStruct() *dialect.DialectStruct {
 
 		UUIDValue: "test_uuid",
 	}
+}
+
+func newDefaultTestEscapes() map[string]string {
+	escapes := dialect.NewDefaultEscapes()
+	escapes[`'`] = `\'`
+	return escapes
 }

@@ -1,7 +1,6 @@
 package refactor
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/gogolfing/dbschema/refactor/strval"
@@ -60,7 +59,7 @@ func TestColumn_Definition_success(t *testing.T) {
 				Name: "name",
 				Type: "type",
 			},
-			"name type",
+			`"name" type`,
 		},
 		{
 			&Column{
@@ -68,16 +67,33 @@ func TestColumn_Definition_success(t *testing.T) {
 				Type:       "{Dialect.Bool}",
 				IsNullable: newString(strval.False),
 			},
-			fmt.Sprintf("name %v NOT NULL", defaultTestDialect.BoolValue),
+			`"name" ` + defaultTestDialect.BoolValue + ` NOT NULL`,
+		},
+		{
+			&Column{
+				Name:    "name",
+				Type:    "type",
+				Default: newString("default_value"),
+			},
+			`"name" type DEFAULT 'default_value'::type`,
+		},
+		{
+			&Column{
+				Name:       "name",
+				Type:       "type",
+				IsNullable: newString(strval.False),
+				Default:    newString("def'ault\nvalue"),
+			},
+			`"name" type NOT NULL DEFAULT 'def\'ault\nvalue'::type`,
 		},
 	}
 	for _, test := range tests {
 		result, err := test.c.Definition(defaultTestContext)
 		if err != nil {
-			t.Errorf("test.c.Definition(defaultContext) error = %v WANT %v", err, nil)
+			t.Errorf("test.c.Definition(defaultTestContext) error = %v WANT %v", err, nil)
 		}
 		if result != test.result {
-			t.Errorf("test.c.Definition(defaultContext) result = %v WANT %v", result, test.result)
+			t.Errorf("test.c.Definition(defaultTestContext) result = %v WANT %v", result, test.result)
 		}
 	}
 }

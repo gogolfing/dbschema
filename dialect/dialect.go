@@ -17,8 +17,9 @@ const (
 
 //SQL modifiers that are the same across supported dialects.
 const (
-	NotNull = "NOT NULL"
-	Default = "DEFAULT"
+	NotNull     = "NOT NULL"
+	Default     = "DEFAULT"
+	IfNotExists = "IF NOT EXISTS"
 )
 
 var ErrMethodDoesNotExist = errors.New("dbschema/dialect: method does not exist")
@@ -36,13 +37,16 @@ func (e ErrUnsupportedDBMS) Error() string {
 //Dialect is the contract that all database types must implement for dbschema to
 //generate the correct SQL for a given DBMS dialect.
 type Dialect interface {
-	DBMS() string
-
 	ConnectionString(conn *conn.Connection) (string, error)
 
-	QuoteRef(in string) string
+	DBMS() string
 
+	QuoteRef(in string) string
 	QuoteConst(in string) string
+
+	EscapeConst(in string) (string, bool)
+
+	Cast(in, t string) string
 
 	//Following are the "variable" methods.
 
@@ -169,12 +173,29 @@ func isMethodIsOfVariableType(method reflect.Value) bool {
 	return true
 }
 
+func NewDefaultEscapes() map[string]string {
+	return map[string]string{
+		"\b": `\b`,
+		"\f": `\f`,
+		"\n": `\n`,
+		"\r": `\r`,
+		"\t": `\t`,
+	}
+}
+
+func DoubleColonCaster(in, t string) string {
+	return fmt.Sprintf("%v%v%v", in, "::", t)
+}
+
 type DialectStruct struct {
 	DBMSValue string
 
-	QuoteRefValue string
-
+	QuoteRefValue   string
 	QuoteConstValue string
+
+	Escapes map[string]string
+
+	Caster func(value, t string) string
 
 	IntegerValue string
 	Int8Value    string
@@ -216,6 +237,19 @@ func (d *DialectStruct) QuoteRef(in string) string {
 
 func (d *DialectStruct) QuoteConst(in string) string {
 	return Quote(in, d.QuoteConstValue)
+}
+
+func (d *DialectStruct) EscapeConst(in string) (string, bool) {
+	contains := false
+	for key, value := range d.Escapes {
+		contains = strings.Contains(in, key) || contains
+		in = strings.Replace(in, key, value, -1)
+	}
+	return d.QuoteConst(in), contains
+}
+
+func (d *DialectStruct) Cast(in, t string) string {
+	return d.Caster(in, t)
 }
 
 func (d *DialectStruct) Integer() (string, error) {
@@ -310,6 +344,6 @@ func (d *DialectStruct) validString(value string) (string, error) {
 	return value, nil
 }
 
-func Quote(in, quote string) string {
-	return in
+func Quote(in, q string) string {
+	return fmt.Sprintf("%v%v%v", q, in, q)
 }

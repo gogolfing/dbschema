@@ -46,8 +46,7 @@ func (c *Column) Definition(ctx Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	name, t := expanded[0], expanded[1]
-
+	name, t := ctx.QuoteRef(expanded[0]), expanded[1]
 	result := fmt.Sprintf("%v %v", name, t)
 
 	if !strval.Bool(c.IsNullable, true) {
@@ -56,6 +55,7 @@ func (c *Column) Definition(ctx Context) (string, error) {
 	if c.Default != nil {
 		result = fmt.Sprintf("%v %v %v", result, dialect.Default, c.DefaultConstant(ctx))
 	}
+
 	return result, nil
 }
 
@@ -63,5 +63,6 @@ func (c *Column) DefaultConstant(ctx Context) string {
 	if c.Default == nil {
 		return ""
 	}
-	return ctx.QuoteConst(*c.Default)
+	escaped, _ := ctx.EscapeConst(*c.Default)
+	return ctx.Cast(escaped, c.Type)
 }

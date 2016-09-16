@@ -46,7 +46,11 @@ func newPostgresqlDialectStruct() *DialectStruct {
 		DBMSValue: Postgresql,
 
 		QuoteRefValue:   `"`,
-		QuoteConstValue: "'",
+		QuoteConstValue: `'`,
+
+		Escapes: newPostgresqlEscapes(),
+
+		Caster: DoubleColonCaster,
 
 		IntegerValue: "INTEGER",
 		// Int8Value not implemented.
@@ -77,4 +81,10 @@ func newPostgresqlDialectStruct() *DialectStruct {
 
 		UUIDValue: "UUID",
 	}
+}
+
+func newPostgresqlEscapes() map[string]string {
+	escapes := NewDefaultEscapes()
+	escapes[`'`] = `\'`
+	return escapes
 }
