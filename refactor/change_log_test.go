@@ -71,8 +71,8 @@ func TestNewChangeLogFile(t *testing.T) {
 
 	//make sure variables are all what they should be.
 	testVariablesEqual(t, changeLog,
-		"{varNameOne}", "varValueOne",
-		"{varNameTwo}", "varValueTwo",
+		"${varNameOne}", "varValueOne",
+		"${varNameTwo}", "varValueTwo",
 	)
 
 	//make sure ChangeSets are what they should be.

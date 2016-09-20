@@ -2,12 +2,9 @@ package refactor
 
 import (
 	"encoding/xml"
-	"fmt"
 	"os"
 	"strings"
 	"testing"
-
-	"github.com/gogolfing/dbschema/refactor/strval"
 )
 
 func TestErrInvalid_Error(t *testing.T) {
@@ -35,10 +32,6 @@ func decodeSourceIntoValueError(t *testing.T, value interface{}, source string) 
 	return err
 }
 
-func newString(s string) *string {
-	return &s
-}
-
 func writeFile(t *testing.T, file *os.File, source string) {
 	if _, err := file.WriteString(source); err != nil {
 		t.Fatal(err)
@@ -48,13 +41,6 @@ func writeFile(t *testing.T, file *os.File, source string) {
 	}
 }
 
-func testValidateBoolError(t *testing.T, prefix string, err error) {
-	if err == nil {
-		t.Error("err must not be nil")
-	}
-	boolErr := strval.ValidateBool(newString(""))
-	want := fmt.Errorf("%v %v", prefix, boolErr)
-	if want.Error() != err.Error() {
-		t.Errorf("err = %v WANT %v", err, want)
-	}
+func newString(s string) *string {
+	return &s
 }

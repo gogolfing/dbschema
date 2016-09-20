@@ -20,8 +20,7 @@ func (e ErrInvalidReference) Error() string {
 	return fmt.Sprintf("dbschema/vars: invalid reference %q", string(e))
 }
 
-var envReferenceRegexp = regexp.MustCompile(`^\$\{[^{}]+\}$`)
-var referenceRegexp = regexp.MustCompile(`^\{[^{}]+\}$`)
+var referenceRegexp = regexp.MustCompile(`^\$\{[^${}]+\}$`)
 
 type Variables struct {
 	XMLName xml.Name `xml:"Variables"`
@@ -46,37 +45,41 @@ func (v *Variables) Put(variable *Variable) {
 }
 
 func (v *Variables) Dereference(expr string) (string, error) {
+	origExpr := expr
 	expr = strings.TrimSpace(expr)
-	if IsVariableReference(expr) {
-		name := expr[1 : len(expr)-1]
-		value := v.get(name)
-		if value == nil {
-			return "", ErrDoesNotExist(expr)
-		}
-		return *value, nil
+	if !IsVariableReference(expr) {
+		return "", ErrInvalidReference(origExpr)
+	}
+	name := InnerVariableName(expr)
+	value, ok := v.GetOk(name)
+	if ok {
+		return value, nil
 	}
 	return DereferenceEnv(expr)
 }
 
-func DereferenceEnv(expr string) (string, error) {
-	expr = strings.TrimSpace(expr)
-	if !IsEnvVariableReference(expr) {
-		return "", ErrInvalidReference(expr)
-	}
-	name := expr[2 : len(expr)-1]
-	value := os.Getenv(name)
-	if value == "" {
-		return "", ErrDoesNotExist(expr)
-	}
-	return value, nil
+func (v *Variables) GetOk(name string) (string, bool) {
+	value, ok := v.values[name]
+	return value, ok
 }
 
-func (v *Variables) get(name string) *string {
-	value, ok := v.values[name]
-	if !ok {
-		return nil
+func DereferenceEnv(expr string) (string, error) {
+	origExpr := expr
+	expr = strings.TrimSpace(expr)
+	if !IsVariableReference(expr) {
+		return "", ErrInvalidReference(origExpr)
 	}
-	return &value
+	name := InnerVariableName(expr)
+	value, ok := GetEnvOk(name)
+	if ok {
+		return value, nil
+	}
+	return "", ErrDoesNotExist(expr)
+}
+
+func GetEnvOk(name string) (string, bool) {
+	value := os.Getenv(name)
+	return value, value != ""
 }
 
 func (v *Variables) UnmarshalXML(dec *xml.Decoder, start xml.StartElement) error {
@@ -112,21 +115,13 @@ type Variable struct {
 	Value string `xml:"value,attr"`
 }
 
-func IsEnvVariableReference(expr string) bool {
-	return envReferenceRegexp.MatchString(strings.TrimSpace(expr))
+func InnerVariableName(expr string) string {
+	if !IsVariableReference(expr) {
+		return expr
+	}
+	return expr[2 : len(expr)-1]
 }
 
 func IsVariableReference(expr string) bool {
 	return referenceRegexp.MatchString(strings.TrimSpace(expr))
-}
-
-func InnerVariableName(expr string) string {
-	trimmed := strings.TrimSpace(expr)
-	if IsEnvVariableReference(expr) {
-		return trimmed[2 : len(trimmed)-1]
-	}
-	if IsVariableReference(expr) {
-		return trimmed[1 : len(trimmed)-1]
-	}
-	return expr
 }

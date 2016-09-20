@@ -108,13 +108,13 @@ func TestVariables_Dereference(t *testing.T) {
 		value string
 		err   error
 	}{
-		{"{nameOne}", "valueOne", nil},
-		{"{nameTwo}", "valueTwo", nil},
-		{"{nameThree}", "", ErrDoesNotExist},
-		{"nameFour", "", ErrInvalidReference},
+		{"${nameOne}", "valueOne", nil},
+		{"${nameTwo}", "valueTwo", nil},
+		{"${nameThree}", "", ErrDoesNotExist("${nameThree}")},
+		{"$nameFour", "", ErrInvalidReference("$nameFour")},
 
 		{"${envVarYes}", "yes", nil},
-		{"${envVarNo}", "", ErrDoesNotExist},
+		{"${envVarNo}", "", ErrDoesNotExist("${envVarNo}")},
 	}
 	for _, test := range tests {
 		value, err := vars.Dereference(test.name)

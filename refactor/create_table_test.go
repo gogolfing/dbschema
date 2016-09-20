@@ -7,22 +7,23 @@ import (
 	"github.com/gogolfing/dbschema/vars"
 )
 
-func TestCreatTable_Validate_errorOnEmptyName(t *testing.T) {
+func TestCreateTable_Validate_errorOnEmptyName(t *testing.T) {
 	c := &CreateTable{}
 	if err := c.Validate(); err != ErrInvalid("CreateTable.name cannot be empty") {
+		t.Error(err)
 		t.Fail()
 	}
 }
 
-func TestCreateTable_Validate_errorIfNotExistsNotBool(t *testing.T) {
-	c := &CreateTable{Name: "name", IfNotExists: newString("")}
+func TestCreateTable_Validate_errorOnIfNotExistsNotBool(t *testing.T) {
+	c := &CreateTable{Name: NewStringAttr("name"), IfNotExists: NewBoolAttr("not bool")}
 	err := c.Validate()
-	testValidateBoolError(t, "CreateTable.ifNotExists", err)
+	testBoolAttrValidateError(t, err, "CreateTable.ifNotExists")
 }
 
 func TestCreateTable_Validate_errorColumnsValidation(t *testing.T) {
 	c := &CreateTable{
-		Name: "name",
+		Name: NewStringAttr("name"),
 		Columns: []*Column{
 			&Column{},
 		},
@@ -40,7 +41,7 @@ func TestCreateTable_Up_errorValidate(t *testing.T) {
 }
 
 func TestCreateTable_Up_errorExpandAll(t *testing.T) {
-	c := &CreateTable{Name: "{name}"}
+	c := &CreateTable{Name: NewStringAttr("${name}")}
 	_, err := c.Up(defaultTestContext)
 	if _, ok := err.(vars.ErrDoesNotExist); !ok {
 		t.Fail()
@@ -49,7 +50,7 @@ func TestCreateTable_Up_errorExpandAll(t *testing.T) {
 
 func TestCreateTable_Up_errorColumnDefinitions(t *testing.T) {
 	c := &CreateTable{
-		Name: "name",
+		Name: NewStringAttr("name"),
 		Columns: []*Column{
 			&Column{},
 		},
@@ -67,22 +68,20 @@ func TestCreateTable_Up_success(t *testing.T) {
 		//table without any columns.
 		{
 			&CreateTable{
-				Name:    "table_name",
+				Name:    NewStringAttr("table_name"),
 				Columns: nil,
 			},
 			[]Stmt{
-				`CREATE TABLE "table_name" (
-
-)`,
+				`CREATE TABLE "table_name" ()`,
 			},
 		},
 
 		//table with a single column.
 		{
 			&CreateTable{
-				Name: "table_name",
+				Name: NewStringAttr("table_name"),
 				Columns: []*Column{
-					&Column{Name: "col1", Type: "type1"},
+					NewColumn("col1", "type1"),
 				},
 			},
 			[]Stmt{
@@ -95,10 +94,10 @@ func TestCreateTable_Up_success(t *testing.T) {
 		//table with multiple columns.
 		{
 			&CreateTable{
-				Name: "table_name",
+				Name: NewStringAttr("table_name"),
 				Columns: []*Column{
-					&Column{Name: "col1", Type: "type1"},
-					&Column{Name: "col2", Type: "type2"},
+					NewColumn("col1", "type1"),
+					NewColumn("col2", "type2"),
 				},
 			},
 			[]Stmt{

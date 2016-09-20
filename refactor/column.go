@@ -5,36 +5,33 @@ import (
 	"fmt"
 
 	"github.com/gogolfing/dbschema/dialect"
-	"github.com/gogolfing/dbschema/refactor/strval"
 )
 
 type Column struct {
 	XMLName xml.Name `xml:"Column"`
 
-	Name string `xml:"name,attr"`
-	Type string `xml:"type,attr"`
+	Name *StringAttr `xml:"name,attr"`
+	Type *StringAttr `xml:"type,attr"`
 
-	IsNullable *string `xml:"isNullable,attr"`
+	IsNullable *BoolAttr `xml:"isNullable,attr"`
 
-	Default *string `xml:"default,attr"`
+	Default *StringAttr `xml:"default,attr"`
 
 	Constraint *Constraint `xml:"Constraint"`
 }
 
 func (c *Column) Validate() error {
-	if c.Name == "" {
-		return ErrInvalid("Column.name cannot be empty")
-	}
-	if c.Type == "" {
-		return ErrInvalid("Column.type cannot be empty")
-	}
-	if err := strval.ValidateBool(c.IsNullable); err != nil {
-		return fmt.Errorf("Column.isNullable %v", err)
-	}
-	if c.Constraint != nil {
-		return c.Constraint.Validate()
-	}
-	return nil
+	return ValidateAll(
+		c.Name.NotEmptyValidator("Column.name"),
+		c.Type.NotEmptyValidator("Column.type"),
+		c.IsNullable.Validator("Column.isNullable"),
+		ValidatorFunc(func() error {
+			if c.Constraint == nil {
+				return nil
+			}
+			return c.Constraint.Validate()
+		}),
+	)
 }
 
 func (c *Column) Definition(ctx Context) (string, error) {
@@ -42,27 +39,46 @@ func (c *Column) Definition(ctx Context) (string, error) {
 		return "", err
 	}
 
-	expanded, err := ExpandAll(ctx, c.Name, c.Type)
+	expanded, err := ExpandAll(
+		ctx,
+		c.Name,
+		c.Type,
+		c.IsNullable.Expander(true),
+		c.Default,
+	)
 	if err != nil {
 		return "", err
 	}
-	name, t := ctx.QuoteRef(expanded[0]), expanded[1]
+	name, t, isNullable, def :=
+		ctx.QuoteRef(expanded[0]),
+		expanded[1],
+		BoolString(expanded[2]),
+		expanded[3]
+
 	result := fmt.Sprintf("%v %v", name, t)
 
-	if !strval.Bool(c.IsNullable, true) {
+	if !isNullable {
 		result = fmt.Sprintf("%v %v", result, dialect.NotNull)
 	}
 	if c.Default != nil {
-		result = fmt.Sprintf("%v %v %v", result, dialect.Default, c.DefaultConstant(ctx))
+		result = fmt.Sprintf("%v %v %v", result, dialect.Default, Constant(ctx, def, t))
 	}
 
 	return result, nil
 }
 
-func (c *Column) DefaultConstant(ctx Context) string {
-	if c.Default == nil {
-		return ""
-	}
-	escaped, _ := ctx.EscapeConst(*c.Default)
-	return ctx.Cast(escaped, c.Type)
+func Constant(ctx Context, expr, t string) string {
+	escaped, _ := ctx.EscapeConst(expr)
+	return ctx.Cast(escaped, t)
+}
+
+func ColumnsValidator(columns []*Column) Validator {
+	return ValidatorFunc(func() error {
+		for _, c := range columns {
+			if err := c.Validate(); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }

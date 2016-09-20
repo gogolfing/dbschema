@@ -175,7 +175,7 @@ type Param struct {
 }
 
 func possibleVariable(expr string) (string, error) {
-	if vars.IsEnvVariableReference(expr) {
+	if vars.IsVariableReference(expr) {
 		return vars.DereferenceEnv(expr)
 	}
 	return expr, nil

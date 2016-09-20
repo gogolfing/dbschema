@@ -1,34 +1,24 @@
 package refactor
 
-import (
-	"encoding/xml"
-	"fmt"
-
-	"github.com/gogolfing/dbschema/refactor/strval"
-)
+import "encoding/xml"
 
 type Constraint struct {
 	XMLName xml.Name `xml:"Constraint"`
 
-	IsUnique   *string `xml:"isUnique,attr"`
-	UniqueName *string `xml:"uniqueName,attr"`
+	IsUnique   *BoolAttr   `xml:"isUnique,attr"`
+	UniqueName *StringAttr `xml:"uniqueName,attr"`
 
-	IsPrimary   *string `xml:"isPrimary,attr"`
-	PrimaryName *string `xml:"primaryName,attr"`
+	IsPrimaryKey *BoolAttr   `xml:"isPrimaryKey,attr"`
+	PrimaryName  *StringAttr `xml:"primaryName,attr"`
 
-	IsForeign   *string `xml:"isForeign,attr"`
-	ForeignName *string `xml:"foreignName,attr"`
+	IsForeignKey *BoolAttr   `xml:"isForeignKey,attr"`
+	ForeignName  *StringAttr `xml:"foreignName,attr"`
 }
 
 func (c *Constraint) Validate() error {
-	if err := strval.ValidateBool(c.IsUnique); err != nil {
-		return fmt.Errorf("Constraint.isUnique %v", err)
-	}
-	if err := strval.ValidateBool(c.IsPrimary); err != nil {
-		return fmt.Errorf("Constraint.isPrimary %v", err)
-	}
-	if err := strval.ValidateBool(c.IsForeign); err != nil {
-		return fmt.Errorf("Constraint.isForeign %v", err)
-	}
-	return nil
+	return ValidateAll(
+		c.IsUnique.Validator("Constraint.isUnique"),
+		c.IsPrimaryKey.Validator("Constraint.isPrimaryKey"),
+		c.IsForeignKey.Validator("Constraint.isForeignKey"),
+	)
 }

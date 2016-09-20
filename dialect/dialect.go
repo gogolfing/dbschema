@@ -96,9 +96,6 @@ const DialectVariablePrefix = "Dialect."
 func Expand(expr string, v *vars.Variables, d Dialect) (string, error) {
 	origExpr := expr
 
-	if vars.IsEnvVariableReference(expr) {
-		return vars.DereferenceEnv(expr)
-	}
 	if vars.IsVariableReference(expr) {
 		value, err := v.Dereference(expr)
 		//err will not be vars.ErrInvalidReference because of the prior vars.IsVariableReference() check.

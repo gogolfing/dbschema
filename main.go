@@ -21,8 +21,6 @@ const (
 	ExitCodeOpenDBSchemaFailed = 7
 )
 
-var cliArgs = os.Args[1:]
-
 func main() {
 	mainFunc()
 }
@@ -30,7 +28,7 @@ func main() {
 var mainFunc = func() {
 	cli := cli.NewCLI(os.Args[0], os.Stdout, os.Stderr)
 
-	err := cli.Run(cliArgs)
+	err := cli.Run(os.Args[1:])
 
 	if err != nil {
 		exitError(os.Exit, getCode, err)

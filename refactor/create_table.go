@@ -2,35 +2,27 @@ package refactor
 
 import (
 	"encoding/xml"
-	"fmt"
+	"strings"
 
 	"github.com/gogolfing/dbschema/dialect"
-	"github.com/gogolfing/dbschema/refactor/strval"
 )
 
 type CreateTable struct {
 	XMLName xml.Name `xml:"CreateTable"`
 
-	Name string `xml:"name,attr"`
+	Name *StringAttr `xml:"name,attr"`
 
-	IfNotExists *string `xml:"ifNotExists,attr"`
+	IfNotExists *BoolAttr `xml:"ifNotExists,attr"`
 
 	Columns []*Column `xml:"Columns"`
 }
 
 func (c *CreateTable) Validate() error {
-	if c.Name == "" {
-		return ErrInvalid("CreateTable.name cannot be empty")
-	}
-	if err := strval.ValidateBool(c.IfNotExists); err != nil {
-		return fmt.Errorf("CreateTable.ifNotExists %v", err)
-	}
-	for _, col := range c.Columns {
-		if err := col.Validate(); err != nil {
-			return err
-		}
-	}
-	return nil
+	return ValidateAll(
+		c.Name.NotEmptyValidator("CreateTable.name"),
+		c.IfNotExists.Validator("CreateTable.ifNotExists"),
+		ColumnsValidator(c.Columns),
+	)
 }
 
 func (c *CreateTable) Up(ctx Context) ([]Stmt, error) {
@@ -50,40 +42,46 @@ func (c *CreateTable) up(ctx Context) ([]Stmt, error) {
 }
 
 func (c *CreateTable) definition(ctx Context) (Stmt, error) {
-	expanded, err := ExpandAll(ctx, c.Name)
+	expanded, err := ExpandAll(
+		ctx,
+		c.Name,
+		c.IfNotExists.Expander(false),
+	)
 	if err != nil {
 		return "", err
 	}
-	name := expanded[0]
+	name, ifNotExists := expanded[0], BoolString(expanded[1])
 
 	result := dialect.CreateTable
-	if strval.Bool(c.IfNotExists, false) {
+
+	if ifNotExists {
 		result += " " + dialect.IfNotExists
 	}
-	result += " " + ctx.QuoteRef(name) + " (\n"
+
+	result += " " + ctx.QuoteRef(name) + " ("
 
 	colDefs, err := c.columnDefinitions(ctx)
 	if err != nil {
 		return "", err
 	}
-	result += colDefs + "\n)"
+	if colDefs != "" {
+		result += "\n" + colDefs + "\n"
+	}
+	result += ")"
 
 	return Stmt(result), nil
 }
 
 func (c *CreateTable) columnDefinitions(ctx Context) (string, error) {
-	result := ""
-	for i, col := range c.Columns {
+	colDefs := []string{}
+	for _, col := range c.Columns {
 		colDef, err := col.Definition(ctx)
 		if err != nil {
 			return "", err
 		}
-		result += "\t" + colDef
-		if i != len(c.Columns)-1 {
-			result += ",\n"
-		}
+		colDefs = append(colDefs, "\t"+colDef)
 	}
-	return result, nil
+	return strings.Join(colDefs, ",\n"), nil
 }
 
 func (c *CreateTable) constraints(ctx Context) ([]Stmt, error) {

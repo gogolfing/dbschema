@@ -7,14 +7,33 @@ type Context interface {
 	Expand(expr string) (value string, err error)
 }
 
-func ExpandAll(ctx Context, expressions ...string) ([]string, error) {
+func ExpandAll(ctx Context, expanders ...Expander) ([]string, error) {
 	result := []string{}
-	for _, expr := range expressions {
-		if value, err := ctx.Expand(expr); err != nil {
+	for _, expander := range expanders {
+		value, err := expander.Expand(ctx)
+		if err != nil {
 			return nil, err
-		} else {
-			result = append(result, value)
 		}
+		result = append(result, value)
 	}
 	return result, nil
+}
+
+type Expander interface {
+	Expand(Context) (string, error)
+}
+
+type ExpanderFunc func(Context) (string, error)
+
+func (ef ExpanderFunc) Expand(ctx Context) (string, error) {
+	return ef(ctx)
+}
+
+func StringExpander(s *string, def string) Expander {
+	return ExpanderFunc(func(ctx Context) (string, error) {
+		if s == nil {
+			return def, nil
+		}
+		return ctx.Expand(*s)
+	})
 }
