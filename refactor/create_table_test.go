@@ -9,10 +9,8 @@ import (
 
 func TestCreateTable_Validate_errorOnEmptyName(t *testing.T) {
 	c := &CreateTable{}
-	if err := c.Validate(); err != ErrInvalid("CreateTable.name cannot be empty") {
-		t.Error(err)
-		t.Fail()
-	}
+	err := c.Validate()
+	testStringAttrEmptyError(t, err, "CreateTable.name")
 }
 
 func TestCreateTable_Validate_errorOnIfNotExistsNotBool(t *testing.T) {
@@ -29,6 +27,13 @@ func TestCreateTable_Validate_errorColumnsValidation(t *testing.T) {
 		},
 	}
 	if err := c.Validate(); err != ErrInvalid("Column.name cannot be empty") {
+		t.Fail()
+	}
+}
+
+func TestCreateTable_Validate_success(t *testing.T) {
+	c := &CreateTable{Name: NewStringAttr("name")}
+	if err := c.Validate(); err != nil {
 		t.Fail()
 	}
 }
@@ -68,8 +73,7 @@ func TestCreateTable_Up_success(t *testing.T) {
 		//table without any columns.
 		{
 			&CreateTable{
-				Name:    NewStringAttr("table_name"),
-				Columns: nil,
+				Name: NewStringAttr("table_name"),
 			},
 			[]Stmt{
 				`CREATE TABLE "table_name" ()`,
@@ -105,6 +109,35 @@ func TestCreateTable_Up_success(t *testing.T) {
 	"col1" type1,
 	"col2" type2
 )`,
+			},
+		},
+
+		//table with primary key.
+		{
+			&CreateTable{
+				Name: NewStringAttr("table_name"),
+				Columns: []*Column{
+					&Column{
+						Name: NewStringAttr("col1"),
+						Type: NewStringAttr("type1"),
+						Constraint: &Constraint{
+							IsPrimaryKey: NewBoolAttr("true"),
+						},
+					},
+					&Column{
+						Name: NewStringAttr("col2"),
+						Type: NewStringAttr("type2"),
+						Constraint: &Constraint{
+							IsPrimaryKey: NewBoolAttr("true"),
+						},
+					},
+				},
+			},
+			[]Stmt{
+				`CREATE TABLE "table_name" (
+	"col1" type1,
+	"col2" type2
+)`, `ALTER TABLE "table_name" ADD CONSTRAINT "table_name_pkey" PRIMARY KEY ("col1", "col2")`,
 			},
 		},
 	}

@@ -67,6 +67,31 @@ func (c *Column) Definition(ctx Context) (string, error) {
 	return result, nil
 }
 
+func (c *Column) primaryKeyIndexColumn(ctx Context) (string, *IndexColumn, error) {
+	if c.Constraint == nil {
+		return "", nil, nil
+	}
+
+	expanded, err := ExpandAll(ctx, c.Name)
+	if err != nil {
+		return "", nil, err
+	}
+	name := expanded[0]
+
+	pkName, isPk, err := c.Constraint.primaryKey(ctx)
+	if err != nil {
+		return "", nil, err
+	}
+	if !isPk {
+		return "", nil, nil
+	}
+	ic := &IndexColumn{
+		Name: NewStringAttr(name),
+	}
+
+	return pkName, ic, nil
+}
+
 func Constant(ctx Context, expr, t string) string {
 	escaped, _ := ctx.EscapeConst(expr)
 	return ctx.Cast(escaped, t)

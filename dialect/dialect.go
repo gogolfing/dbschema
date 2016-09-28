@@ -10,13 +10,13 @@ import (
 	"github.com/gogolfing/dbschema/vars"
 )
 
-//SQL statements that are the same accross supported dialects.
+//SQL constructs that are the same accross supported dialects.
 const (
 	CreateTable = "CREATE TABLE"
-)
-
-//SQL modifiers that are the same across supported dialects.
-const (
+	AlterTable  = "ALTER TABLE"
+	Add         = "ADD"
+	Constraint  = "CONSTRAINT"
+	PrimaryKey  = "PRIMARY KEY"
 	NotNull     = "NOT NULL"
 	Default     = "DEFAULT"
 	IfNotExists = "IF NOT EXISTS"

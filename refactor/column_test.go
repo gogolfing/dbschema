@@ -15,16 +15,14 @@ func NewColumn(name, t string) *Column {
 
 func TestColumn_Validate_errorOnEmtpyName(t *testing.T) {
 	c := &Column{}
-	if err := c.Validate(); err != ErrInvalid("Column.name cannot be empty") {
-		t.Fail()
-	}
+	err := c.Validate()
+	testStringAttrEmptyError(t, err, "Column.name")
 }
 
 func TestColumn_Validate_errorOnEmtpyType(t *testing.T) {
 	c := &Column{Name: NewStringAttr("name")}
-	if err := c.Validate(); err != ErrInvalid("Column.type cannot be empty") {
-		t.Fail()
-	}
+	err := c.Validate()
+	testStringAttrEmptyError(t, err, "Column.type")
 }
 
 func TestColumn_Validate_errorOnIsNullableNotBool(t *testing.T) {
@@ -41,6 +39,16 @@ func TestColumn_Validate_errorOnConstraintValidate(t *testing.T) {
 	c := NewColumn("name", "type")
 	c.Constraint = invalidConstraint
 	if err := c.Validate(); err != invalidConstraintError {
+		t.Fail()
+	}
+}
+
+func TestColumn_Validate_success(t *testing.T) {
+	c := &Column{
+		Name: NewStringAttr("name"),
+		Type: NewStringAttr("type"),
+	}
+	if err := c.Validate(); err != nil {
 		t.Fail()
 	}
 }

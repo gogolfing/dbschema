@@ -8,11 +8,11 @@ type Constraint struct {
 	IsUnique   *BoolAttr   `xml:"isUnique,attr"`
 	UniqueName *StringAttr `xml:"uniqueName,attr"`
 
-	IsPrimaryKey *BoolAttr   `xml:"isPrimaryKey,attr"`
-	PrimaryName  *StringAttr `xml:"primaryName,attr"`
+	IsPrimaryKey   *BoolAttr   `xml:"isPrimaryKey,attr"`
+	PrimaryKeyName *StringAttr `xml:"primaryName,attr"`
 
-	IsForeignKey *BoolAttr   `xml:"isForeignKey,attr"`
-	ForeignName  *StringAttr `xml:"foreignName,attr"`
+	IsForeignKey   *BoolAttr   `xml:"isForeignKey,attr"`
+	ForeignKeyName *StringAttr `xml:"foreignName,attr"`
 }
 
 func (c *Constraint) Validate() error {
@@ -21,4 +21,12 @@ func (c *Constraint) Validate() error {
 		c.IsPrimaryKey.Validator("Constraint.isPrimaryKey"),
 		c.IsForeignKey.Validator("Constraint.isForeignKey"),
 	)
+}
+
+func (c *Constraint) primaryKey(ctx Context) (string, bool, error) {
+	expanded, err := ExpandAll(ctx, c.PrimaryKeyName, c.IsPrimaryKey.Expander(false))
+	if err != nil {
+		return "", false, err
+	}
+	return expanded[0], BoolString(expanded[1]), nil
 }

@@ -14,7 +14,7 @@ type CreateTable struct {
 
 	IfNotExists *BoolAttr `xml:"ifNotExists,attr"`
 
-	Columns []*Column `xml:"Columns"`
+	Columns []*Column `xml:"Column"`
 }
 
 func (c *CreateTable) Validate() error {
@@ -85,7 +85,52 @@ func (c *CreateTable) columnDefinitions(ctx Context) (string, error) {
 }
 
 func (c *CreateTable) constraints(ctx Context) ([]Stmt, error) {
-	return nil, nil
+	result := []Stmt{}
+
+	pk, err := c.primaryKeyConstraint(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if pk != "" {
+		result = append(result, pk)
+	}
+
+	return result, nil
+}
+
+func (c *CreateTable) primaryKeyConstraint(ctx Context) (Stmt, error) {
+	name := ""
+	ics := []*IndexColumn{}
+
+	for _, col := range c.Columns {
+		tempName, ic, err := col.primaryKeyIndexColumn(ctx)
+		if err != nil {
+			return "", err
+		}
+		if ic != nil {
+			ics = append(ics, ic)
+		}
+		if name != "" && tempName != "" {
+			name = tempName
+		}
+	}
+
+	if len(ics) == 0 {
+		return "", nil
+	}
+
+	pk := &AddPrimaryKey{
+		Table:        c.Name,
+		Name:         NewStringAttr(name),
+		IndexColumns: ics,
+	}
+
+	stmts, err := pk.Up(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	return stmts[0], nil
 }
 
 func (c *CreateTable) Down(ctx Context) ([]Stmt, error) {
