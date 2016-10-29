@@ -37,6 +37,15 @@ func (s *StringAttr) NotEmptyValidator(path string) Validator {
 	})
 }
 
+func (s *StringAttr) ExpandDefault(def string) Expander {
+	return ExpanderFunc(func(ctx Context) (string, error) {
+		if s == nil || *s == "" {
+			return def, nil
+		}
+		return ctx.Expand(string(*s))
+	})
+}
+
 func (s *StringAttr) Expand(ctx Context) (string, error) {
 	if s == nil {
 		return "", nil

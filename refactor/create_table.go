@@ -25,11 +25,11 @@ func (c *CreateTable) Validate() error {
 	)
 }
 
-func (c *CreateTable) Up(ctx Context) ([]Stmt, error) {
-	return StmtsFunc(c.up).Validated(c, ctx)
+func (c *CreateTable) Stmts(ctx Context) ([]Stmt, error) {
+	return StmtsFunc(c.stmts).Validated(c, ctx)
 }
 
-func (c *CreateTable) up(ctx Context) ([]Stmt, error) {
+func (c *CreateTable) stmts(ctx Context) ([]Stmt, error) {
 	definition, err := c.definition(ctx)
 	if err != nil {
 		return nil, err
@@ -87,25 +87,23 @@ func (c *CreateTable) columnDefinitions(ctx Context) (string, error) {
 func (c *CreateTable) constraints(ctx Context) ([]Stmt, error) {
 	result := []Stmt{}
 
-	pk, err := c.primaryKeyConstraint(ctx)
+	pks, err := c.primaryKeyConstraints(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if pk != "" {
-		result = append(result, pk)
-	}
+	result = append(result, pks...)
 
 	return result, nil
 }
 
-func (c *CreateTable) primaryKeyConstraint(ctx Context) (Stmt, error) {
+func (c *CreateTable) primaryKeyConstraints(ctx Context) ([]Stmt, error) {
 	name := ""
 	ics := []*IndexColumn{}
 
 	for _, col := range c.Columns {
 		tempName, ic, err := col.primaryKeyIndexColumn(ctx)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 		if ic != nil {
 			ics = append(ics, ic)
@@ -116,7 +114,7 @@ func (c *CreateTable) primaryKeyConstraint(ctx Context) (Stmt, error) {
 	}
 
 	if len(ics) == 0 {
-		return "", nil
+		return nil, nil
 	}
 
 	pk := &AddPrimaryKey{
@@ -125,14 +123,5 @@ func (c *CreateTable) primaryKeyConstraint(ctx Context) (Stmt, error) {
 		IndexColumns: ics,
 	}
 
-	stmts, err := pk.Up(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	return stmts[0], nil
-}
-
-func (c *CreateTable) Down(ctx Context) ([]Stmt, error) {
-	return nil, nil
+	return pk.Stmts(ctx)
 }

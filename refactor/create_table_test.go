@@ -38,22 +38,22 @@ func TestCreateTable_Validate_success(t *testing.T) {
 	}
 }
 
-func TestCreateTable_Up_errorValidate(t *testing.T) {
+func TestCreateTable_Stmts_errorValidate(t *testing.T) {
 	c := &CreateTable{}
 	if err := c.Validate(); err == nil {
 		t.Fail()
 	}
 }
 
-func TestCreateTable_Up_errorExpandAll(t *testing.T) {
+func TestCreateTable_Stmts_errorExpandAll(t *testing.T) {
 	c := &CreateTable{Name: NewStringAttr("${name}")}
-	_, err := c.Up(defaultTestContext)
+	_, err := c.Stmts(defaultTestContext)
 	if _, ok := err.(vars.ErrDoesNotExist); !ok {
 		t.Fail()
 	}
 }
 
-func TestCreateTable_Up_errorColumnDefinitions(t *testing.T) {
+func TestCreateTable_Stmts_errorColumnDefinitions(t *testing.T) {
 	c := &CreateTable{
 		Name: NewStringAttr("name"),
 		Columns: []*Column{
@@ -65,7 +65,7 @@ func TestCreateTable_Up_errorColumnDefinitions(t *testing.T) {
 	}
 }
 
-func TestCreateTable_Up_success(t *testing.T) {
+func TestCreateTable_Stmts_success(t *testing.T) {
 	tests := []struct {
 		c      *CreateTable
 		result []Stmt
@@ -77,6 +77,17 @@ func TestCreateTable_Up_success(t *testing.T) {
 			},
 			[]Stmt{
 				`CREATE TABLE "table_name" ()`,
+			},
+		},
+
+		//table with IfNotExists set.
+		{
+			&CreateTable{
+				Name:        NewStringAttr("table_name"),
+				IfNotExists: NewBoolAttr(True),
+			},
+			[]Stmt{
+				`CREATE TABLE IF NOT EXISTS "table_name" ()`,
 			},
 		},
 
@@ -137,17 +148,18 @@ func TestCreateTable_Up_success(t *testing.T) {
 				`CREATE TABLE "table_name" (
 	"col1" type1,
 	"col2" type2
-)`, `ALTER TABLE "table_name" ADD CONSTRAINT "table_name_pkey" PRIMARY KEY ("col1", "col2")`,
+)`,
+				`ALTER TABLE "table_name" ADD CONSTRAINT "table_name_pkey" PRIMARY KEY ("col1", "col2")`,
 			},
 		},
 	}
 	for _, test := range tests {
-		result, err := test.c.Up(defaultTestContext)
+		result, err := test.c.Stmts(defaultTestContext)
 		if err != nil {
-			t.Errorf("test.c.Up(defaultTestContext) error = %v WANT %v", err, nil)
+			t.Errorf("test.c.Stmts(defaultTestContext) error = %v WANT %v", err, nil)
 		}
 		if !reflect.DeepEqual(result, test.result) {
-			t.Errorf("test.c.Up(defaultTestContext) result = %v WANT %v", result, test.result)
+			t.Errorf("test.c.Stmts(defaultTestContext) result = %v WANT %v", result, test.result)
 		}
 	}
 }

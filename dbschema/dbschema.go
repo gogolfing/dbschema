@@ -53,19 +53,49 @@ func (d *DBSchema) Close() error {
 	return d.db.Close()
 }
 
+func (d *DBSchema) finalize() error {
+	return nil
+}
+
 func (d *DBSchema) Expand(expr string) (value string, err error) {
 	return dialect.Expand(expr, d.changeLog.Variables, d.Dialect)
 }
 
-func (d *DBSchema) init() error {
-	rows, err := d.db.Query("select CURRENT_DATE")
+func (d *DBSchema) executeInTransaction(changers ...refactor.Changer) (err error) {
+	stmts, err := d.collectChangerStmts(changers...)
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
-	return nil
+
+	tx, err := d.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	for _, stmt := range stmts {
+		_, err = tx.Exec(string(stmt))
+		if err != nil {
+			return
+		}
+	}
+
+	err = tx.Commit()
+	return
 }
 
-func (d *DBSchema) finalize() error {
-	return nil
+func (d *DBSchema) collectChangerStmts(changers ...refactor.Changer) ([]refactor.Stmt, error) {
+	result := []refactor.Stmt{}
+	for _, changer := range changers {
+		stmts, err := changer.Stmts(d)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, stmts...)
+	}
+	return result, nil
 }

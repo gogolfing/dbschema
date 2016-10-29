@@ -33,14 +33,14 @@ func TestAddPrimaryKey_Validate_success(t *testing.T) {
 	}
 }
 
-func TestAddPrimaryKey_Up_errorValidate(t *testing.T) {
+func TestAddPrimaryKey_Stmts_errorValidate(t *testing.T) {
 	apk := &AddPrimaryKey{}
-	if _, err := apk.Up(defaultTestContext); err == nil {
+	if _, err := apk.Stmts(defaultTestContext); err == nil {
 		t.Fail()
 	}
 }
 
-func TestAddPrimaryKey_Up_success(t *testing.T) {
+func TestAddPrimaryKey_Stmts_success(t *testing.T) {
 	tests := []struct {
 		ctx    Context
 		apk    *AddPrimaryKey
@@ -75,16 +75,16 @@ func TestAddPrimaryKey_Up_success(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		stmts, err := test.apk.Up(test.ctx)
+		stmts, err := test.apk.Stmts(test.ctx)
 		if err != nil {
-			t.Errorf("test.apk.Up(test.ctx) error = %v WANT %v", err, nil)
+			t.Errorf("test.apk.Stmts(test.ctx) error = %v WANT %v", err, nil)
 		}
 		if len(stmts) != 1 {
-			t.Errorf("test.apk.Up(test.ctx) len(stmts) = %v WANT %v", len(stmts), 1)
+			t.Errorf("test.apk.Stmts(test.ctx) len(stmts) = %v WANT %v", len(stmts), 1)
 		}
 		stmt := string(stmts[0])
 		if stmt != test.result {
-			t.Errorf("test.apk.Up(test.ctx) stmt = %v WANT %v", stmt, test.result)
+			t.Errorf("test.apk.Stmts(test.ctx) stmt = %v WANT %v", stmt, test.result)
 		}
 	}
 }

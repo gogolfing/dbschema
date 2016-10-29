@@ -59,13 +59,17 @@ type Dialect interface {
 	Float32() (string, error)
 	Float64() (string, error)
 
+	Char32() (string, error)
 	Char64() (string, error)
 	Char128() (string, error)
 	Char256() (string, error)
 
+	VarChar32() (string, error)
 	VarChar64() (string, error)
 	VarChar128() (string, error)
 	VarChar256() (string, error)
+	VarChar512() (string, error)
+	VarChar1024() (string, error)
 
 	Text() (string, error)
 
@@ -203,13 +207,17 @@ type DialectStruct struct {
 	Float32Value string
 	Float64Value string
 
+	Char32Value  string
 	Char64Value  string
 	Char128Value string
 	Char256Value string
 
-	VarChar64Value  string
-	VarChar128Value string
-	VarChar256Value string
+	VarChar32Value   string
+	VarChar64Value   string
+	VarChar128Value  string
+	VarChar256Value  string
+	VarChar512Value  string
+	VarChar1024Value string
 
 	TextValue string
 
@@ -277,6 +285,10 @@ func (d *DialectStruct) Float64() (string, error) {
 	return d.validString(d.Float64Value)
 }
 
+func (d *DialectStruct) Char32() (string, error) {
+	return d.validString(d.Char32Value)
+}
+
 func (d *DialectStruct) Char64() (string, error) {
 	return d.validString(d.Char64Value)
 }
@@ -289,6 +301,10 @@ func (d *DialectStruct) Char256() (string, error) {
 	return d.validString(d.Char256Value)
 }
 
+func (d *DialectStruct) VarChar32() (string, error) {
+	return d.validString(d.VarChar32Value)
+}
+
 func (d *DialectStruct) VarChar64() (string, error) {
 	return d.validString(d.VarChar64Value)
 }
@@ -299,6 +315,14 @@ func (d *DialectStruct) VarChar128() (string, error) {
 
 func (d *DialectStruct) VarChar256() (string, error) {
 	return d.validString(d.VarChar256Value)
+}
+
+func (d *DialectStruct) VarChar512() (string, error) {
+	return d.validString(d.VarChar512Value)
+}
+
+func (d *DialectStruct) VarChar1024() (string, error) {
+	return d.validString(d.VarChar1024Value)
 }
 
 func (d *DialectStruct) Text() (string, error) {

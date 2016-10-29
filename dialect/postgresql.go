@@ -53,21 +53,25 @@ func newPostgresqlDialectStruct() *DialectStruct {
 		Caster: DoubleColonCaster,
 
 		IntegerValue: "INTEGER",
-		// Int8Value not implemented.
-		Int16Value: "SMALLINT",
-		Int32Value: "INTEGER",
-		Int64Value: "BIGINT",
+		Int8Value:    "SMALLINT", //this is the same as the Int16Value because Int8 is not implemented. users may override elsewhere.
+		Int16Value:   "SMALLINT",
+		Int32Value:   "INTEGER",
+		Int64Value:   "BIGINT",
 
 		Float32Value: "REAL",
 		Float64Value: "DOUBLE PRECISION",
 
+		Char32Value:  "CHARACTER(32)",
 		Char64Value:  "CHARACTER(64)",
 		Char128Value: "CHARACTER(128)",
 		Char256Value: "CHARACTER(256)",
 
-		VarChar64Value:  "CHARACTER VARYING(64)",
-		VarChar128Value: "CHARACTER VARYING(128)",
-		VarChar256Value: "CHARACTER VARYING(256)",
+		VarChar32Value:   "CHARACTER VARYING(32)",
+		VarChar64Value:   "CHARACTER VARYING(64)",
+		VarChar128Value:  "CHARACTER VARYING(128)",
+		VarChar256Value:  "CHARACTER VARYING(256)",
+		VarChar512Value:  "CHARACTER VARYING(512)",
+		VarChar1024Value: "CHARACTER VARYING(1024)",
 
 		TextValue: "TEXT",
 

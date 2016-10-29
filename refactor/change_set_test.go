@@ -30,7 +30,7 @@ func TestChangeSet_UnmarshalXML(t *testing.T) {
 	if cs.Id != "id" || *cs.Name != "name" || *cs.Author != "author" {
 		t.Fail()
 	}
-	if !reflect.DeepEqual(cs.changers, []Changer{
+	if !reflect.DeepEqual(cs.changes, []ChangeStmts{
 		&RawSql{XMLName: xml.Name{Local: "RawSql"}},
 		&RawSql{XMLName: xml.Name{Local: "RawSql"}},
 	}) {

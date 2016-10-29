@@ -16,6 +16,8 @@ const (
 type ChangeLog struct {
 	XMLName xml.Name `xml:"ChangeLog"`
 
+	ChangeLogTableName *StringAttr `xml:"changeLogTableName,attr"`
+
 	path string
 
 	Variables *vars.Variables `xml:"Variables"`

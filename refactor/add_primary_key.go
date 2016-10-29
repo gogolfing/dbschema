@@ -24,11 +24,11 @@ func (apk *AddPrimaryKey) Validate() error {
 	)
 }
 
-func (apk *AddPrimaryKey) Up(ctx Context) ([]Stmt, error) {
-	return StmtsFunc(apk.up).Validated(apk, ctx)
+func (apk *AddPrimaryKey) Stmts(ctx Context) ([]Stmt, error) {
+	return StmtsFunc(apk.stmts).Validated(apk, ctx)
 }
 
-func (apk *AddPrimaryKey) up(ctx Context) ([]Stmt, error) {
+func (apk *AddPrimaryKey) stmts(ctx Context) ([]Stmt, error) {
 	expanded, err := ExpandAll(
 		ctx,
 		apk.Table,
