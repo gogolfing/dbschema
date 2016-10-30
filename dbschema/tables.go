@@ -55,5 +55,30 @@ func createChangeLogTable(name string) *refactor.CreateTable {
 }
 
 func createChangeLogLockTable(name string) *refactor.CreateTable {
-	return nil
+	return &refactor.CreateTable{
+		Name:        refactor.NewStringAttr(name),
+		IfNotExists: refactor.NewBoolAttr(refactor.True),
+		Columns: []*refactor.Column{
+			&refactor.Column{
+				Name:       refactor.NewStringAttr("id"),
+				Type:       refactor.NewStringAttr("${Dialect.VarChar32}"),
+				IsNullable: refactor.NewBoolAttr(refactor.False),
+			},
+			&refactor.Column{
+				Name:       refactor.NewStringAttr("is_locked"),
+				Type:       refactor.NewStringAttr("${Dialect.Integer}"),
+				IsNullable: refactor.NewBoolAttr(refactor.False),
+			},
+			&refactor.Column{
+				Name:       refactor.NewStringAttr("locked_at"),
+				Type:       refactor.NewStringAttr("${Dialect.Timestamp}"),
+				IsNullable: refactor.NewBoolAttr(refactor.False),
+			},
+			&refactor.Column{
+				Name:       refactor.NewStringAttr("locked_by"),
+				Type:       refactor.NewStringAttr("${Dialect.VarChar256}"),
+				IsNullable: refactor.NewBoolAttr(refactor.False),
+			},
+		},
+	}
 }

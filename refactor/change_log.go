@@ -16,7 +16,8 @@ const (
 type ChangeLog struct {
 	XMLName xml.Name `xml:"ChangeLog"`
 
-	ChangeLogTableName *StringAttr `xml:"changeLogTableName,attr"`
+	ChangeLogTableName     *StringAttr `xml:"changeLogTableName,attr"`
+	ChangeLogLockTableName *StringAttr `xml:"changeLogLockTableName,attr"`
 
 	path string
 
@@ -47,6 +48,7 @@ func NewChangeLogReader(path string, in io.Reader) (*ChangeLog, error) {
 func (c *ChangeLog) UnmarshalXML(dec *xml.Decoder, start xml.StartElement) error {
 	c.XMLName = start.Name
 	c.ensureVariablesExist()
+	c.copyAttributes(start)
 	for token, _ := dec.Token(); !isXMLTokenEndElement(token); token, _ = dec.Token() {
 		//we do not care about anything that is not an xml.StartElement.
 		//and because of the for loop before, it cannot be an xml.EndElement.
@@ -63,6 +65,17 @@ func (c *ChangeLog) UnmarshalXML(dec *xml.Decoder, start xml.StartElement) error
 		}
 	}
 	return nil
+}
+
+func (c *ChangeLog) copyAttributes(start xml.StartElement) {
+	for _, attr := range start.Attr {
+		switch attr.Name.Local {
+		case "changeLogTableName":
+			c.ChangeLogTableName = NewStringAttr(attr.Value)
+		case "changeLogLockTableName":
+			c.ChangeLogLockTableName = NewStringAttr(attr.Value)
+		}
+	}
 }
 
 func (c *ChangeLog) unmarshalXMLInnerElement(dec *xml.Decoder, innerStart xml.StartElement) error {

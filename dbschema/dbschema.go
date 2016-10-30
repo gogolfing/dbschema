@@ -1,6 +1,8 @@
 package dbschema
 
 import (
+	"database/sql"
+
 	"github.com/gogolfing/dbschema/conn"
 	"github.com/gogolfing/dbschema/dialect"
 	"github.com/gogolfing/dbschema/refactor"
@@ -61,31 +63,36 @@ func (d *DBSchema) Expand(expr string) (value string, err error) {
 	return dialect.Expand(expr, d.changeLog.Variables, d.Dialect)
 }
 
-func (d *DBSchema) executeInTransaction(changers ...refactor.Changer) (err error) {
+func (d *DBSchema) executeTxChangers(changers ...refactor.Changer) (err error) {
 	stmts, err := d.collectChangerStmts(changers...)
 	if err != nil {
 		return err
 	}
 
+	work := func(tx *sql.Tx) error {
+		for _, stmt := range stmts {
+			_, err := tx.Exec(string(stmt))
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	return d.executeTxWork(work)
+}
+
+func (d *DBSchema) executeTxWork(work func(*sql.Tx) error) error {
 	tx, err := d.db.Begin()
 	if err != nil {
 		return err
 	}
-	defer func() {
-		if err != nil {
-			tx.Rollback()
-		}
-	}()
-
-	for _, stmt := range stmts {
-		_, err = tx.Exec(string(stmt))
-		if err != nil {
-			return
-		}
+	err = work(tx)
+	if err != nil {
+		tx.Rollback()
+		return err
 	}
-
-	err = tx.Commit()
-	return
+	return tx.Commit()
 }
 
 func (d *DBSchema) collectChangerStmts(changers ...refactor.Changer) ([]refactor.Stmt, error) {

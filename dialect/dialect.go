@@ -115,8 +115,6 @@ func Expand(expr string, v *vars.Variables, d Dialect) (string, error) {
 			name = strings.TrimPrefix(name, DialectVariablePrefix)
 		}
 
-		fmt.Println("inner name", name)
-
 		value, err = CallVariableMethodOnDialect(d, name)
 		if err != nil {
 			return "", vars.ErrDoesNotExist(origExpr)

@@ -12,7 +12,7 @@ import (
 type ErrUnsupportedDialect string
 
 func (e ErrUnsupportedDialect) Error() string {
-	return fmt.Sprintf("dbschema/dbchema: unsupported dialect.Dialect.DBMS() %q", string(e))
+	return fmt.Sprintf("dbschema/dbschema: unsupported dialect.Dialect.DBMS() %q", string(e))
 }
 
 type DB interface {
