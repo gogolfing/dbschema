@@ -52,17 +52,17 @@ type SqlTx struct {
 	*sql.Tx
 }
 
-func (s SqlTx) Exec(stmt *refactor.Stmt) (sql.Result, error) {
+func (s SqlTx) Exec(stmt refactor.Stmt) (sql.Result, error) {
 	fmt.Println(stmt)
-	return s.Tx.Exec(stmt.Raw, stmt.Params...)
+	return s.Tx.Exec(string(stmt))
 }
 
-func (s SqlTx) Query(stmt *refactor.Stmt) (Rows, error) {
-	return s.Tx.Query(stmt.Raw, stmt.Params...)
+func (s SqlTx) Query(stmt refactor.Stmt) (Rows, error) {
+	return s.Tx.Query(string(stmt))
 }
 
-func (s SqlTx) QueryRow(stmt *refactor.Stmt) Row {
-	return s.Tx.QueryRow(stmt.Raw, stmt.Params...)
+func (s SqlTx) QueryRow(stmt refactor.Stmt) Row {
+	return s.Tx.QueryRow(string(stmt))
 }
 
 func (s SqlTx) Commit() error {

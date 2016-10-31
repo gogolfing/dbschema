@@ -28,12 +28,12 @@ type Tx interface {
 }
 
 type Querier interface {
-	Query(stmt *refactor.Stmt) (Rows, error)
-	QueryRow(stmt *refactor.Stmt) Row
+	Query(stmt refactor.Stmt) (Rows, error)
+	QueryRow(stmt refactor.Stmt) Row
 }
 
 type Execer interface {
-	Exec(stmt *refactor.Stmt) (sql.Result, error)
+	Exec(stmt refactor.Stmt) (sql.Result, error)
 }
 
 type Row interface {

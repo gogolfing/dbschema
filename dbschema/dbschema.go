@@ -93,8 +93,8 @@ func (d *DBSchema) executeTxWork(work func(Tx) error) error {
 	return tx.Commit()
 }
 
-func (d *DBSchema) collectChangerStmts(changers ...refactor.Changer) ([]*refactor.Stmt, error) {
-	result := []*refactor.Stmt{}
+func (d *DBSchema) collectChangerStmts(changers ...refactor.Changer) ([]refactor.Stmt, error) {
+	result := []refactor.Stmt{}
 	for _, changer := range changers {
 		stmts, err := changer.Stmts(d)
 		if err != nil {
