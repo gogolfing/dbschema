@@ -58,11 +58,11 @@ func (apk *AddPrimaryKey) stmts(ctx Context) ([]Stmt, error) {
 	}, nil
 }
 
-func (apk *AddPrimaryKey) getName(expTable, expName string) string {
-	if expName == "" {
-		return fmt.Sprintf("%v_pkey", expTable)
+func (apk *AddPrimaryKey) getName(table, name string) string {
+	if name == "" {
+		return fmt.Sprintf("%v_pkey", table)
 	}
-	return expName
+	return name
 }
 
 func (apk *AddPrimaryKey) columnNamesClause(ctx Context) (string, error) {
