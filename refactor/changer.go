@@ -3,7 +3,7 @@ package refactor
 import "encoding/xml"
 
 type Changer interface {
-	Stmts(ctx Context) (stmts []Stmt, err error)
+	Stmts(ctx Context) (stmts []*Stmt, err error)
 }
 
 func decodeInnerChangers(dec *xml.Decoder, start xml.StartElement) ([]Changer, error) {
