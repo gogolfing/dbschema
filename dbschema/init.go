@@ -1,10 +1,6 @@
 package dbschema
 
-import (
-	"database/sql"
-
-	"github.com/gogolfing/dbschema/refactor"
-)
+import "github.com/gogolfing/dbschema/refactor"
 
 const (
 	DefaultChangeLogTableName     = "dbschema_changelog"
@@ -40,7 +36,7 @@ func (d *DBSchema) initTables() error {
 }
 
 func (d *DBSchema) initLock() error {
-	work := func(tx *sql.Tx) error {
+	work := func(tx Tx) error {
 		return nil
 	}
 	return d.executeTxWork(work)

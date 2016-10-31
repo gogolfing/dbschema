@@ -1,8 +1,6 @@
 package dbschema
 
 import (
-	"database/sql"
-
 	"github.com/gogolfing/dbschema/conn"
 	"github.com/gogolfing/dbschema/dialect"
 	"github.com/gogolfing/dbschema/refactor"
@@ -69,9 +67,9 @@ func (d *DBSchema) executeTxChangers(changers ...refactor.Changer) (err error) {
 		return err
 	}
 
-	work := func(tx *sql.Tx) error {
+	work := func(tx Tx) error {
 		for _, stmt := range stmts {
-			_, err := tx.Exec(string(stmt))
+			_, err := tx.Exec(stmt)
 			if err != nil {
 				return err
 			}
@@ -82,7 +80,7 @@ func (d *DBSchema) executeTxChangers(changers ...refactor.Changer) (err error) {
 	return d.executeTxWork(work)
 }
 
-func (d *DBSchema) executeTxWork(work func(*sql.Tx) error) error {
+func (d *DBSchema) executeTxWork(work func(Tx) error) error {
 	tx, err := d.db.Begin()
 	if err != nil {
 		return err
@@ -95,8 +93,8 @@ func (d *DBSchema) executeTxWork(work func(*sql.Tx) error) error {
 	return tx.Commit()
 }
 
-func (d *DBSchema) collectChangerStmts(changers ...refactor.Changer) ([]refactor.Stmt, error) {
-	result := []refactor.Stmt{}
+func (d *DBSchema) collectChangerStmts(changers ...refactor.Changer) ([]*refactor.Stmt, error) {
+	result := []*refactor.Stmt{}
 	for _, changer := range changers {
 		stmts, err := changer.Stmts(d)
 		if err != nil {
