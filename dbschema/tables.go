@@ -2,6 +2,14 @@ package dbschema
 
 import "github.com/gogolfing/dbschema/refactor"
 
+//Constants for change log lock column names.
+const (
+	ColumnLockId   = "lock_id"
+	ColumnIsLocked = "is_locked"
+	ColumnLockedAt = "locked_at"
+	ColumnLockedBy = "locked_by"
+)
+
 func createChangeLogTable(name string) *refactor.CreateTable {
 	return &refactor.CreateTable{
 		Name:        refactor.NewStringAttr(name),
@@ -60,22 +68,22 @@ func createChangeLogLockTable(name string) *refactor.CreateTable {
 		IfNotExists: refactor.NewBoolAttr(refactor.True),
 		Columns: []*refactor.Column{
 			&refactor.Column{
-				Name:       refactor.NewStringAttr("id"),
+				Name:       refactor.NewStringAttr(ColumnLockId),
 				Type:       refactor.NewStringAttr("${Dialect.VarChar32}"),
 				IsNullable: refactor.NewBoolAttr(refactor.False),
 			},
 			&refactor.Column{
-				Name:       refactor.NewStringAttr("is_locked"),
+				Name:       refactor.NewStringAttr(ColumnIsLocked),
 				Type:       refactor.NewStringAttr("${Dialect.Integer}"),
 				IsNullable: refactor.NewBoolAttr(refactor.False),
 			},
 			&refactor.Column{
-				Name:       refactor.NewStringAttr("locked_at"),
+				Name:       refactor.NewStringAttr(ColumnLockedAt),
 				Type:       refactor.NewStringAttr("${Dialect.Timestamp}"),
 				IsNullable: refactor.NewBoolAttr(refactor.False),
 			},
 			&refactor.Column{
-				Name:       refactor.NewStringAttr("locked_by"),
+				Name:       refactor.NewStringAttr(ColumnLockedBy),
 				Type:       refactor.NewStringAttr("${Dialect.VarChar256}"),
 				IsNullable: refactor.NewBoolAttr(refactor.False),
 			},

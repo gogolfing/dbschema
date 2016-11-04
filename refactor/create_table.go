@@ -25,11 +25,11 @@ func (c *CreateTable) Validate() error {
 	)
 }
 
-func (c *CreateTable) Stmts(ctx Context) ([]Stmt, error) {
+func (c *CreateTable) Stmts(ctx Context) ([]*Stmt, error) {
 	return StmtsFunc(c.stmts).Validated(c, ctx)
 }
 
-func (c *CreateTable) stmts(ctx Context) ([]Stmt, error) {
+func (c *CreateTable) stmts(ctx Context) ([]*Stmt, error) {
 	definition, err := c.definition(ctx)
 	if err != nil {
 		return nil, err
@@ -38,17 +38,17 @@ func (c *CreateTable) stmts(ctx Context) ([]Stmt, error) {
 	if err != nil {
 		return nil, err
 	}
-	return append([]Stmt{definition}, constraints...), nil
+	return append([]*Stmt{definition}, constraints...), nil
 }
 
-func (c *CreateTable) definition(ctx Context) (Stmt, error) {
+func (c *CreateTable) definition(ctx Context) (*Stmt, error) {
 	expanded, err := ExpandAll(
 		ctx,
 		c.Name,
 		c.IfNotExists.Expander(false),
 	)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	name, ifNotExists := expanded[0], BoolString(expanded[1])
 
@@ -62,14 +62,14 @@ func (c *CreateTable) definition(ctx Context) (Stmt, error) {
 
 	colDefs, err := c.columnDefinitions(ctx)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if colDefs != "" {
 		result += "\n" + colDefs + "\n"
 	}
 	result += ")"
 
-	return Stmt(result), nil
+	return NewStmt(result), nil
 }
 
 func (c *CreateTable) columnDefinitions(ctx Context) (string, error) {
@@ -84,8 +84,8 @@ func (c *CreateTable) columnDefinitions(ctx Context) (string, error) {
 	return strings.Join(colDefs, ",\n"), nil
 }
 
-func (c *CreateTable) constraints(ctx Context) ([]Stmt, error) {
-	result := []Stmt{}
+func (c *CreateTable) constraints(ctx Context) ([]*Stmt, error) {
+	result := []*Stmt{}
 
 	pks, err := c.primaryKeyConstraints(ctx)
 	if err != nil {
@@ -96,7 +96,7 @@ func (c *CreateTable) constraints(ctx Context) ([]Stmt, error) {
 	return result, nil
 }
 
-func (c *CreateTable) primaryKeyConstraints(ctx Context) ([]Stmt, error) {
+func (c *CreateTable) primaryKeyConstraints(ctx Context) ([]*Stmt, error) {
 	name := ""
 	ics := []*IndexColumn{}
 

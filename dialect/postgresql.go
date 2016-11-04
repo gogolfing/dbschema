@@ -1,6 +1,7 @@
 package dialect
 
 import (
+	"fmt"
 	"net/url"
 
 	"github.com/gogolfing/dbschema/conn"
@@ -51,6 +52,8 @@ func newPostgresqlDialectStruct() *DialectStruct {
 		Escapes: newPostgresqlEscapes(),
 
 		Caster: DoubleColonCaster,
+
+		PlaceholderValue: func(num int) string { return fmt.Sprintf("$%v", num+1) },
 
 		IntegerValue: "INTEGER",
 		Int8Value:    "SMALLINT", //this is the same as the Int16Value because Int8 is not implemented. users may override elsewhere.

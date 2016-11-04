@@ -48,6 +48,8 @@ type Dialect interface {
 
 	Cast(in, t string) string
 
+	Placeholder(num int) string
+
 	//Following are the "variable" methods.
 
 	Integer() (string, error)
@@ -196,6 +198,8 @@ type DialectStruct struct {
 
 	Caster func(value, t string) string
 
+	PlaceholderValue func(num int) string
+
 	IntegerValue string
 	Int8Value    string
 	Int16Value   string
@@ -253,6 +257,10 @@ func (d *DialectStruct) EscapeConst(in string) (string, bool) {
 
 func (d *DialectStruct) Cast(in, t string) string {
 	return d.Caster(in, t)
+}
+
+func (d *DialectStruct) Placeholder(num int) string {
+	return d.PlaceholderValue(num)
 }
 
 func (d *DialectStruct) Integer() (string, error) {

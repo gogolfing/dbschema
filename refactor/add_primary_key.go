@@ -24,11 +24,11 @@ func (apk *AddPrimaryKey) Validate() error {
 	)
 }
 
-func (apk *AddPrimaryKey) Stmts(ctx Context) ([]Stmt, error) {
+func (apk *AddPrimaryKey) Stmts(ctx Context) ([]*Stmt, error) {
 	return StmtsFunc(apk.stmts).Validated(apk, ctx)
 }
 
-func (apk *AddPrimaryKey) stmts(ctx Context) ([]Stmt, error) {
+func (apk *AddPrimaryKey) stmts(ctx Context) ([]*Stmt, error) {
 	expanded, err := ExpandAll(
 		ctx,
 		apk.Table,
@@ -45,8 +45,8 @@ func (apk *AddPrimaryKey) stmts(ctx Context) ([]Stmt, error) {
 		return nil, err
 	}
 
-	return []Stmt{
-		Stmt(fmt.Sprintf("%v %v %v %v %v %v (%v)",
+	return []*Stmt{
+		NewStmtFmt("%v %v %v %v %v %v (%v)",
 			dialect.AlterTable,
 			ctx.QuoteRef(table),
 			dialect.Add,
@@ -54,7 +54,7 @@ func (apk *AddPrimaryKey) stmts(ctx Context) ([]Stmt, error) {
 			ctx.QuoteRef(name),
 			dialect.PrimaryKey,
 			columnNamesClause,
-		)),
+		),
 	}, nil
 }
 
