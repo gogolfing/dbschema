@@ -1,6 +1,8 @@
 package dbschema
 
 import (
+	"encoding/csv"
+	"strings"
 	"time"
 
 	"github.com/gogolfing/dbschema/refactor"
@@ -27,6 +29,14 @@ func (d *DBSchema) collectChangeSetRows() ([]*ChangeSetRow, error) {
 				d.selectFrom(
 					d.changeLogTableName,
 					ColumnChangeSetId,
+					ColumnChangeSetName,
+					ColumnChangeSetAuthor,
+					ColumnExecutedAt,
+					ColumnUpdatedAt,
+					ColumnOrderExecuted,
+					ColumnSha256Sum,
+					ColumnTags,
+					ColumnVersion,
 				),
 			),
 		)
@@ -53,7 +63,34 @@ func (d *DBSchema) collectChangeSetRows() ([]*ChangeSetRow, error) {
 }
 
 func scanChangeSetRow(csr *ChangeSetRow, s Scanner) error {
-	return s.Scan(
+	tagsRaw := ""
+	err := s.Scan(
 		&csr.Id,
+		&csr.Name,
+		&csr.Author,
+		&csr.ExecutedAt,
+		&csr.UpdatedAt,
+		&csr.OrderExecuted,
+		&csr.Sha256Sum,
+		&tagsRaw,
+		&csr.Version,
 	)
+	if err != nil {
+		return err
+	}
+	tags, err := parseTags(tagsRaw)
+	if err != nil {
+		return err
+	}
+	csr.Tags = tags
+	return nil
+}
+
+func parseTags(tags string) ([]string, error) {
+	reader := csv.NewReader(strings.NewReader(tags))
+	row, err := reader.Read()
+	if err != nil {
+		return nil, err
+	}
+	return row, nil
 }

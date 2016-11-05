@@ -4,7 +4,15 @@ import "github.com/gogolfing/dbschema/refactor"
 
 //Constants for change log column names.
 const (
-	ColumnChangeSetId = "changeset_id"
+	ColumnChangeSetId     = "changeset_id"
+	ColumnChangeSetName   = "changeset_name"
+	ColumnChangeSetAuthor = "changeset_author"
+	ColumnExecutedAt      = "executed_at"
+	ColumnUpdatedAt       = "updated_at"
+	ColumnOrderExecuted   = "order_executed"
+	ColumnSha256Sum       = "sha256_sum"
+	ColumnTags            = "tags"
+	ColumnVersion         = "dbschema_version"
 )
 
 //Constants for change log lock column names.
