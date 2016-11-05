@@ -2,6 +2,11 @@ package dbschema
 
 import "github.com/gogolfing/dbschema/refactor"
 
+//Constants for change log column names.
+const (
+	ColumnChangeSetId = "changeset_id"
+)
+
 //Constants for change log lock column names.
 const (
 	ColumnLockId   = "lock_id"

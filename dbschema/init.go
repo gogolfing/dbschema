@@ -59,7 +59,7 @@ func (e errAlreadyLocked) Error() string {
 		lockResult = append(
 			lockResult,
 			fmt.Sprintf(
-				"at %v by %v",
+				"At %v by %v",
 				lock.lockedAt.Format(DefaultTimeFormat),
 				lock.lockedBy,
 			),
@@ -88,7 +88,13 @@ func (d *DBSchema) obtainLocks(q Querier) ([]*lock, error) {
 	rows, err := q.Query(
 		refactor.NewStmtFmt(
 			"%v\nWHERE %v = 1 AND %v = %v",
-			d.selectFrom(d.changeLogLockTableName, ColumnLockId, ColumnIsLocked, ColumnLockedAt, ColumnLockedBy),
+			d.selectFrom(
+				d.changeLogLockTableName,
+				ColumnLockId,
+				ColumnIsLocked,
+				ColumnLockedAt,
+				ColumnLockedBy,
+			),
 			d.QuoteRef(ColumnIsLocked),
 			d.QuoteRef(ColumnLockId),
 			d.QuoteConst(DefaultLockId),

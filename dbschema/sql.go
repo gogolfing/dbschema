@@ -2,7 +2,6 @@ package dbschema
 
 import (
 	"database/sql"
-	"fmt"
 
 	"github.com/gogolfing/dbschema/conn"
 	"github.com/gogolfing/dbschema/dialect"
@@ -53,7 +52,6 @@ type SqlTx struct {
 }
 
 func (s SqlTx) Exec(stmt *refactor.Stmt) (sql.Result, error) {
-	fmt.Println(stmt)
 	return s.Tx.Exec(stmt.Raw, stmt.Params...)
 }
 
