@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -14,13 +13,13 @@ import (
 )
 
 var (
-	ErrGlobalFlagParsingFailed     = errors.New("dbschema/cli: parsing global flags failed")
-	ErrSubCommandFlagParsingFailed = errors.New("dbschema/cli: parsing command flags failed")
+	ErrGlobalFlagParsingFailed     = fmt.Errorf("dbschema/cli: parsing global flags failed")
+	ErrSubCommandFlagParsingFailed = fmt.Errorf("dbschema/cli: parsing command flags failed")
 
-	ErrCreatingConnectionFailed = errors.New("dbschema/cli: could not create Connection")
-	ErrCreatingChangeLogFailed  = errors.New("dbschemacli: could not create ChangeLog")
+	ErrCreatingConnectionFailed = fmt.Errorf("dbschema/cli: could not create Connection")
+	ErrCreatingChangeLogFailed  = fmt.Errorf("dbschema/cli: could not create ChangeLog")
 
-	ErrOpeningDBSchemaFailed = errors.New("dbschema/cli: count not open DBSchema")
+	ErrOpeningDBSchemaFailed = fmt.Errorf("dbschema/cli: could not open DBSchema")
 
 	ErrExecutingSubCommandFailed = fmt.Errorf("dbschema/cli: executing %v failed", subCommandName)
 )

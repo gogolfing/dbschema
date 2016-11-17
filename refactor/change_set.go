@@ -22,6 +22,8 @@ type ChangeSet struct {
 	changers []Changer
 }
 
+//add validation for an empty changeset.
+
 func NewChangeSetFile(path string) (*ChangeSet, error) {
 	file, err := os.Open(path)
 	if err != nil {

@@ -45,6 +45,28 @@ func NewChangeLogReader(path string, in io.Reader) (*ChangeLog, error) {
 	return c, nil
 }
 
+func (c *ChangeLog) ChangeSetsSubSlice(afterId, beforeId string) []*ChangeSet {
+	afterIndex := 0
+	if afterId != "" {
+		afterIndex = c.findChangeSetIdIndex(afterIndex, afterId)
+	}
+	beforeIndex := c.findChangeSetIdIndex(afterIndex+1, beforeId)
+
+	result := []*ChangeSet{}
+	for index := afterIndex + 1; index < len(c.ChangeSets) && index < beforeIndex; index++ {
+		result = append(result, c.ChangeSets[index])
+	}
+
+	return result
+}
+
+func (c *ChangeLog) findChangeSetIdIndex(startIndex int, id string) int {
+	for startIndex < len(c.ChangeSets) && c.ChangeSets[startIndex].Id != id {
+		startIndex++
+	}
+	return startIndex
+}
+
 func (c *ChangeLog) UnmarshalXML(dec *xml.Decoder, start xml.StartElement) error {
 	c.XMLName = start.Name
 	c.ensureVariablesExist()

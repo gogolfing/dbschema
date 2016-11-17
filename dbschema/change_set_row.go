@@ -2,16 +2,18 @@ package dbschema
 
 import (
 	"encoding/csv"
+	"fmt"
 	"strings"
 	"time"
 
+	"github.com/gogolfing/dbschema/logger"
 	"github.com/gogolfing/dbschema/refactor"
 )
 
 type ChangeSetRow struct {
 	Id            string
-	Name          string
-	Author        string
+	Name          *string
+	Author        *string
 	ExecutedAt    time.Time
 	UpdatedAt     time.Time
 	OrderExecuted int
@@ -20,12 +22,57 @@ type ChangeSetRow struct {
 	Version       string
 }
 
-func (d *DBSchema) collectChangeSetRows() ([]*ChangeSetRow, error) {
+func (csr *ChangeSetRow) String() string {
+	nameAuthor := ""
+	if csr.Name != nil {
+		nameAuthor += *csr.Name
+	}
+	if csr.Author != nil {
+		if nameAuthor != "" && *csr.Author != "" {
+			nameAuthor += " by "
+		}
+		nameAuthor += *csr.Author
+	}
+	if nameAuthor != "" {
+		nameAuthor += "\n"
+	}
+
+	at := fmt.Sprintf("Executed at %v", csr.ExecutedAt.Format(DefaultTimeFormat))
+	if csr.UpdatedAt != csr.ExecutedAt {
+		at += fmt.Sprintf(" and updated at %v", csr.UpdatedAt.Format(DefaultTimeFormat))
+	}
+
+	return fmt.Sprintf(
+		"ChangeSet - %v\n%v%v",
+		csr.Id,
+		nameAuthor,
+		at,
+	)
+}
+
+func (csr *ChangeSetRow) StringVerbose() string {
+	tags := make([]string, 0, len(csr.Tags))
+	for _, tag := range csr.Tags {
+		tags = append(tags, fmt.Sprintf("%q", tag))
+	}
+
+	return fmt.Sprintf(
+		`SHA-256 Sum:      %v
+Tags:             %v
+DBSchema Version: %v`,
+		csr.Sha256Sum,
+		strings.Join(tags, ", "),
+		csr.Version,
+	)
+}
+
+func (d *DBSchema) listOrderedChangeSetRows() ([]*ChangeSetRow, error) {
 	result := []*ChangeSetRow{}
 
 	work := func(qe QueryExecer) error {
 		rows, err := qe.Query(
 			refactor.NewStmtFmt(
+				"%v\nORDER BY %v ASC",
 				d.selectFrom(
 					d.changeLogTableName,
 					ColumnChangeSetId,
@@ -38,6 +85,7 @@ func (d *DBSchema) collectChangeSetRows() ([]*ChangeSetRow, error) {
 					ColumnTags,
 					ColumnVersion,
 				),
+				d.QuoteRef(ColumnOrderExecuted),
 			),
 		)
 		if err != nil {
@@ -93,4 +141,9 @@ func parseTags(tags string) ([]string, error) {
 		return nil, err
 	}
 	return row, nil
+}
+
+func printChangeSetRow(logger logger.Logger, csr *ChangeSetRow) {
+	fmt.Fprintln(logger.Info(), csr)
+	fmt.Fprintln(logger.Verbose(), csr.StringVerbose())
 }

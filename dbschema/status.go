@@ -8,20 +8,33 @@ import (
 )
 
 func (d *DBSchema) Status(logger logger.Logger) error {
-	fmt.Fprintln(logger.Verbose(), "collecting applied ChangeSets...")
+	collectingAppliedChangeSets(logger.Verbose())
 
-	changeSetRows, err := d.collectChangeSetRows()
+	changeSetRows, err := d.listOrderedChangeSetRows()
 	if err != nil {
 		return err
 	}
 
-	for _, csr := range changeSetRows {
-		fmt.Fprintln(logger.Info(), csr)
+	if len(changeSetRows) == 0 {
+		fmt.Fprintln(logger.Info(), "No applied ChangeSets.")
+		return nil
+	}
+
+	err = iterateChangeSetRows(d.changeLog, changeSetRows, func(before []*refactor.ChangeSet, csr *ChangeSetRow) error {
+		if len(before) > 0 {
+			return &ErrChangeSetOutOfOrder{
+				ChangeSets:   before,
+				ChangeSetRow: csr,
+				BeforeRow:    true,
+			}
+		}
+
+		printChangeSetRow(logger, csr)
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 
 	return nil
-}
-
-func (d *DBSchema) collectChangeSets() ([]*refactor.ChangeSet, error) {
-	return nil, nil
 }
