@@ -33,7 +33,7 @@ func newPostgresqlConnectionString(conn *conn.Connection) (string, error) {
 		return "", err
 	}
 	url := &url.URL{
-		Scheme:   "postgres",
+		Scheme:   Postgresql,
 		User:     user,
 		Host:     host,
 		Path:     path,
