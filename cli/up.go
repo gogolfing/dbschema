@@ -1,5 +1,9 @@
 package cli
 
-type upFlags struct {
+const UpgradeName = "upgrade"
+
+var upgradeAliases = []string{"up"}
+
+type upgrade struct {
 	count int
 }

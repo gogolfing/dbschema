@@ -26,9 +26,7 @@ func main() {
 }
 
 var mainFunc = func() {
-	cli := cli.NewCLI(os.Args[0], os.Stdout, os.Stderr)
-
-	err := cli.Run(os.Args[1:])
+	err := cli.Run(os.Args[0], os.Args[1:], os.Stdout, os.Stderr)
 
 	if err != nil {
 		exitError(os.Exit, getCode, err)

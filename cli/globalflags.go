@@ -1,10 +1,6 @@
 package cli
 
-import (
-	"flag"
-	"fmt"
-	"io"
-)
+import "flag"
 
 const (
 	DefaultVerbose            = false
@@ -17,25 +13,6 @@ const (
 	DefaultPassword           = ""
 	DefaultDatabase           = ""
 )
-
-const (
-	globalOptionsName     = "global_options"
-	subCommandName        = "sub-command"
-	commandParametersName = "command_parameters"
-	commandOptionsName    = "command_options"
-)
-
-func printCommandUsage(out io.Writer, command string) {
-	fmt.Fprintf(
-		out,
-		"Usage: %v [%v...] <%v> [%v...] [%v...]\n\n",
-		command,
-		globalOptionsName,
-		subCommandName,
-		commandParametersName,
-		commandOptionsName,
-	)
-}
 
 type globalFlags struct {
 	verbose bool
@@ -57,27 +34,7 @@ func newGlobalFlags() *globalFlags {
 	}
 }
 
-func (gf *globalFlags) Name() string {
-	return globalOptionsName
-}
-
-func (gf *globalFlags) CanHaveExtraArgs() bool {
-	return true
-}
-
-func (gf *globalFlags) PreParseArgs(args []string) []string {
-	if len(args) == 0 {
-		return []string{"-h"}
-	}
-	return args
-}
-
-func (gf *globalFlags) Usage(out io.Writer, fs *flag.FlagSet) {
-	fmt.Fprintf(out, "%v:\n", globalOptionsName)
-	fs.PrintDefaults()
-}
-
-func (gf *globalFlags) Set(fs *flag.FlagSet) {
+func (gf *globalFlags) SetFlags(fs *flag.FlagSet) {
 	fs.BoolVar(&gf.verbose, "v", DefaultVerbose, "print verbose output")
 	fs.StringVar(&gf.conn, "conn", DefaultConnectionFilePath, "path to connection file")
 	fs.StringVar(&gf.changeLog, "changelog", DefaultChangeLogFilePath, "path to change log file")

@@ -1,15 +1,20 @@
 package cli
 
 import (
+	"flag"
 	"fmt"
 	"io"
-	"strings"
+	"io/ioutil"
 
-	"github.com/gogolfing/dbschema/conn"
 	"github.com/gogolfing/dbschema/dbschema"
-	"github.com/gogolfing/dbschema/dialect"
 	"github.com/gogolfing/dbschema/logger"
-	"github.com/gogolfing/dbschema/refactor"
+)
+
+const (
+	globalOptionsName     = "global_options"
+	subCommandName        = "sub_command"
+	commandParametersName = "command_parameters"
+	commandOptionsName    = "command_options"
 )
 
 var (
@@ -21,24 +26,158 @@ var (
 
 	ErrOpeningDBSchemaFailed = fmt.Errorf("dbschema/cli: could not open DBSchema")
 
-	ErrExecutingSubCommandFailed = fmt.Errorf("dbschema/cli: executing %v failed", subCommandName)
+	ErrExecutingSubCommandFailed = fmt.Errorf("dbschema/cli: executing sub-command failed")
 )
 
-type CLI struct {
-	command string
+var errUnsuppliedSubCommand = fmt.Errorf("%v not supplied", subCommandName)
 
-	out    io.Writer
-	outErr io.Writer
-}
-
-func NewCLI(command string, out, outErr io.Writer) *CLI {
-	return &CLI{
-		command: command,
-		out:     out,
-		outErr:  outErr,
+func Run(command string, args []string, out, outErr io.Writer) error {
+	gf, subCommandArgs, err := parseGlobalFlags(command, args, outErr)
+	if err != nil {
+		return ErrGlobalFlagParsingFailed
 	}
+
+	sc, err := parseSubCommand(subCommandArgs, outErr)
+	if err != nil {
+		return ErrSubCommandFlagParsingFailed
+	}
+
+	logger := createLogger(gf, out, outErr)
+
+	if !sc.NeedsDBSchema() {
+		return runWithDBSchema(sc, nil, logger, outErr)
+	}
+
+	return nil
 }
 
+func parseGlobalFlags(command string, args []string, outErr io.Writer) (gf *globalFlags, subCommandArgs []string, err error) {
+	f := flag.NewFlagSet(command, flag.ContinueOnError)
+	f.SetOutput(ioutil.Discard)
+
+	defer func() {
+		if err != nil {
+			if err != flag.ErrHelp {
+				fmt.Fprintln(outErr, err)
+				fmt.Fprintln(outErr)
+			}
+			printCommandUsage(outErr, command)
+			f.SetOutput(outErr)
+			f.PrintDefaults()
+			if err == flag.ErrHelp {
+				fmt.Fprintln(outErr)
+				printSubCommandsUsage(outErr)
+			}
+		}
+	}()
+
+	gf = newGlobalFlags()
+	gf.SetFlags(f)
+
+	if len(args) == 0 {
+		args = []string{"-h"}
+	}
+	err = f.Parse(args)
+	subCommandArgs = f.Args()
+	return
+}
+
+func printCommandUsage(out io.Writer, command string) {
+	fmt.Fprintf(
+		out,
+		"Usage: %v %v %v %v %v\n",
+		command,
+		formatOptionalArgument(globalOptionsName, true),
+		formatArgument(subCommandName),
+		formatOptionalArgument(commandParametersName, true),
+		formatOptionalArgument(commandOptionsName, true),
+	)
+}
+
+func parseSubCommand(subCommandArgs []string, outErr io.Writer) (sc subCommand, err error) {
+	var f *flag.FlagSet = nil
+
+	defer func() {
+		if err != nil {
+			if err != flag.ErrHelp {
+				fmt.Fprintln(outErr, err)
+				fmt.Fprintln(outErr)
+			}
+			if _, unknown := err.(errUnknownSubCommand); unknown || err == errUnsuppliedSubCommand {
+				printSubCommandsUsage(outErr)
+			} else {
+				printSubCommandUsage(outErr, sc, f)
+			}
+		}
+	}()
+
+	if len(subCommandArgs) == 0 {
+		err = errUnsuppliedSubCommand
+		return
+	}
+
+	name := subCommandArgs[0]
+	sc, err = getSubCommand(name)
+	if err != nil {
+		return
+	}
+
+	f = flag.NewFlagSet(sc.Name(), flag.ContinueOnError)
+	f.SetOutput(ioutil.Discard)
+	sc.SetFlags(f)
+
+	parseArgs := subCommandArgs[1:]
+	for len(parseArgs) > 0 && err == nil {
+		err = f.Parse(parseArgs)
+		parseArgs = f.Args()
+		if err == nil && len(parseArgs) > 0 {
+			err = sc.SetParameter(parseArgs[0])
+			parseArgs = parseArgs[1:]
+		}
+	}
+	if vpErr := sc.ValidateParameters(); err == nil && vpErr != nil {
+		err = vpErr
+	}
+
+	return
+}
+
+func createLogger(gf *globalFlags, out, outErr io.Writer) logger.Logger {
+	var verbose io.Writer = nil
+	if gf.verbose {
+		verbose = out
+	}
+	return logger.NewLoggerWriters(verbose, out, out, outErr)
+}
+
+func runWithDBSchema(sc subCommand, dbschema *dbschema.DBSchema, logger logger.Logger, outErr io.Writer) error {
+	err := sc.Execute(dbschema, logger)
+	if err != nil {
+		if err != errHelpExecution {
+			printlnError(outErr, err)
+		}
+		return ErrExecutingSubCommandFailed
+	}
+	return nil
+}
+
+func printlnError(outErr io.Writer, err error) {
+	fmt.Fprintln(outErr, err)
+}
+
+func formatArgument(arg string) string {
+	return fmt.Sprintf("<%v>", arg)
+}
+
+func formatOptionalArgument(arg string, many bool) string {
+	result := "[" + arg
+	if many {
+		result += "..."
+	}
+	return result + "]"
+}
+
+/*
 func (c *CLI) Run(args []string) error {
 	gf, subCommandArgs, err := c.parseGlobalFlags(args)
 	if err != nil {
@@ -199,3 +338,4 @@ func (c *CLI) printCommandUsage() {
 func (c *CLI) printlnError(err error) {
 	fmt.Fprintln(c.outErr, err)
 }
+*/

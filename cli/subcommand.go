@@ -1,94 +1,132 @@
 package cli
 
 import (
+	"bytes"
+	"flag"
 	"fmt"
 	"io"
 	"sort"
+	"strings"
 
 	"github.com/gogolfing/dbschema/dbschema"
 	"github.com/gogolfing/dbschema/logger"
 )
 
-const (
-	SubCommandStatus  = "status"
-	SubCommandVersion = "version"
-)
+var errInvalidParameter = fmt.Errorf("invalid %v", commandParametersName)
 
-type errUnknownOrUndefinedSubCommand string
+type errUnknownSubCommand string
 
-func (e errUnknownOrUndefinedSubCommand) Error() string {
-	return fmt.Sprintf("unknown or undefined sub-command %q", string(e))
+func (e errUnknownSubCommand) Error() string {
+	return fmt.Sprintf("unknown sub-command %q", string(e))
 }
 
-type SubCommandFunc func(dbschema *dbschema.DBSchema, logger logger.Logger) error
+type subCommand interface {
+	Name() string
+	Aliases() []string
+	Synopsis() string
 
-type SubCommand interface {
-	FlagSetter
+	//Usage returns the command parameters, command parameters description, and
+	//an indication of whether or not the subCommand has options.
+	//params and paramDesc are written to output as is if applicable.
+	Usage() (params, paramDesc string, hasOptions bool)
 
-	ShortDescription() string
-	LongDescription() string
+	Description() string
+
+	SetParameter(param string) error
+	SetFlags(f *flag.FlagSet)
+
+	ValidateParameters() error
 
 	NeedsDBSchema() bool
 	Execute(dbschema *dbschema.DBSchema, logger logger.Logger) error
 }
 
-type subCommandStruct struct {
-	FlagSetter
-
-	short string
-	long  string
-
-	needsDBSchema bool
-	executor      SubCommandFunc
+var subCommandRegistry = struct {
+	names   map[string]subCommand
+	aliases map[string]subCommand
+}{
+	names:   map[string]subCommand{},
+	aliases: map[string]subCommand{},
 }
-
-func (s *subCommandStruct) ShortDescription() string {
-	return s.short
-}
-
-func (s *subCommandStruct) LongDescription() string {
-	return s.long
-}
-
-func (s *subCommandStruct) NeedsDBSchema() bool {
-	return s.needsDBSchema
-}
-
-func (s *subCommandStruct) Execute(dbschema *dbschema.DBSchema, logger logger.Logger) error {
-	return s.executor(dbschema, logger)
-}
-
-type SubCommandCreator func() SubCommand
-
-var subCommandCreators map[string]SubCommandCreator
 
 func init() {
-	subCommandCreators = map[string]SubCommandCreator{}
-
-	subCommandCreators[SubCommandStatus] = createStatusSubCommand
-	subCommandCreators[SubCommandVersion] = createVersionSubCommand
+	registerSubCommands(
+		&version{},
+		&status{},
+		&help{},
+	)
 }
 
-func getSubCommand(name string) (SubCommand, error) {
-	creator, ok := subCommandCreators[name]
-	if !ok {
-		return nil, errUnknownOrUndefinedSubCommand(name)
+func registerSubCommands(subCommands ...subCommand) {
+	for _, sc := range subCommands {
+		subCommandRegistry.names[sc.Name()] = sc
+		for _, alias := range sc.Aliases() {
+			subCommandRegistry.aliases[alias] = sc
+		}
 	}
-	return creator(), nil
+}
+
+func getSubCommand(name string) (subCommand, error) {
+	if sc, ok := subCommandRegistry.names[name]; ok {
+		return sc, nil
+	}
+	if sc, ok := subCommandRegistry.aliases[name]; ok {
+		return sc, nil
+	}
+	return nil, errUnknownSubCommand(name)
+}
+
+func printSubCommandUsage(out io.Writer, sc subCommand, f *flag.FlagSet) {
+	aliases := sc.Aliases()
+	sort.Strings(aliases)
+	aliasesString := strings.Join(aliases, ", ")
+	if aliasesString != "" {
+		aliasesString = ", " + aliasesString
+	}
+	nameDescription := wordWrap(sc.Name()+aliasesString+" - "+strings.TrimSpace(sc.Description()), 120)
+	fmt.Fprintf(out, "%v\n\nUsage: %v", nameDescription, sc.Name())
+
+	params, paramDesc, hasOptions := sc.Usage()
+
+	if params != "" {
+		fmt.Fprintf(out, " %v", params)
+	}
+	if hasOptions {
+		fmt.Fprintf(out, " %v", formatOptionalArgument(commandOptionsName, true))
+	}
+	fmt.Fprintf(out, "\n\n")
+
+	if params == "" {
+		fmt.Fprintf(out, "%v has no %v\n", sc.Name(), formatOptionalArgument(commandParametersName, true))
+	} else {
+		fmt.Fprintf(out, "%v: %v\n", commandParametersName, paramDesc)
+	}
+
+	if hasOptions {
+		fmt.Fprintf(out, "%v:\n", commandOptionsName)
+		f.SetOutput(out)
+		f.PrintDefaults()
+	} else {
+		fmt.Fprintf(out, "%v has no %v\n", sc.Name(), formatOptionalArgument(commandOptionsName, true))
+	}
 }
 
 func printSubCommandsUsage(out io.Writer) {
-	names := []string{}
-	shorts := map[string]string{}
-	for name, creator := range subCommandCreators {
-		sc := creator()
+	names := make([]string, 0, len(subCommandRegistry.names))
+	for name := range subCommandRegistry.names {
 		names = append(names, name)
-		shorts[name] = sc.ShortDescription()
 	}
 	sort.Strings(names)
-	fmt.Fprintf(out, "sub-commands:\n")
+
+	fmt.Fprintf(out, "Available %vs:\n", subCommandName)
 	for _, name := range names {
-		fmt.Fprintf(out, "  %v%v%v\n", name, pad(12, name), shorts[name])
+		sc := subCommandRegistry.names[name]
+		nameAliases := []string{name}
+		nameAliases = append(nameAliases, sc.Aliases()...)
+		sort.Strings(nameAliases[1:])
+		nameAliasesOut := strings.Join(nameAliases, ", ")
+
+		fmt.Fprintf(out, "  %v%v%v\n", nameAliasesOut, pad(16, nameAliasesOut), sc.Synopsis())
 	}
 }
 
@@ -100,4 +138,24 @@ func pad(count int, name string) string {
 		count--
 	}
 	return result
+}
+
+func wordWrap(text string, columns int) string {
+	words := strings.Fields(strings.TrimSpace(text))
+	if len(words) == 0 {
+		return ""
+	}
+
+	buffer := bytes.NewBuffer([]byte(words[0]))
+	charsLeft := columns - buffer.Len()
+	for _, word := range words[1:] {
+		if len(word)+1 > charsLeft {
+			buffer.WriteString("\n" + word)
+			charsLeft = columns - len(word)
+		} else {
+			buffer.WriteString(" " + word)
+			charsLeft -= 1 + len(word)
+		}
+	}
+	return buffer.String()
 }

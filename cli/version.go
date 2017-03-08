@@ -3,48 +3,57 @@ package cli
 import (
 	"flag"
 	"fmt"
-	"io"
+	"runtime"
 
 	"github.com/gogolfing/dbschema/dbschema"
 	"github.com/gogolfing/dbschema/logger"
 )
 
-const versionShort = "prints the version"
-const versionLong = `
-version prints the current version information.
-It ignores all ` + globalOptionsName + `.`
+const VersionName = "version"
 
-func createVersionSubCommand() SubCommand {
-	return &subCommandStruct{
-		FlagSetter: &versionFlags{
-			&flagSetterStruct{
-				name: SubCommandVersion,
-			},
-		},
-		short:         versionShort,
-		long:          versionLong,
-		needsDBSchema: false,
-		executor:      version,
-	}
+type version struct{}
+
+func (v *version) Name() string {
+	return VersionName
 }
 
-type versionFlags struct {
-	*flagSetterStruct
+func (v *version) Aliases() []string {
+	return nil
 }
 
-func (vf *versionFlags) Usage(out io.Writer, _ *flag.FlagSet) {
-	name := vf.Name()
-	fmt.Fprintf(out, "Usage of %v: %v\n", name, name)
-	fmt.Fprintf(
-		out,
-		"There are no %v or %v for %v\n",
-		commandParametersName,
-		commandOptionsName,
-		name,
+func (v *version) Synopsis() string {
+	return "Prints version and build information"
+}
+
+func (v *version) Usage() (params, paramDesc string, hasOptions bool) {
+	return
+}
+
+func (v *version) Description() string {
+	return "Prints the current version and build information."
+}
+
+func (v *version) SetParameter(_ string) error {
+	return errInvalidParameter
+}
+
+func (v *version) SetFlags(_ *flag.FlagSet) {}
+
+func (v *version) ValidateParameters() error {
+	return nil
+}
+
+func (v *version) NeedsDBSchema() bool {
+	return false
+}
+
+func (v *version) Execute(_ *dbschema.DBSchema, logger logger.Logger) error {
+	_, err := fmt.Fprintf(
+		logger.Info(),
+		"Version: %v\nBuild:   %v %v\n",
+		dbschema.Version,
+		runtime.GOOS,
+		runtime.GOARCH,
 	)
-}
-
-func version(_ *dbschema.DBSchema, logger logger.Logger) error {
-	_, err := fmt.Fprintln(logger.Info(), dbschema.Version)
 	return err
 }
