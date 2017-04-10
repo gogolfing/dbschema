@@ -1,8 +1,10 @@
 package dbschema
 
 import (
+	"bytes"
 	"encoding/csv"
 	"fmt"
+	"io"
 	"strings"
 	"time"
 
@@ -22,48 +24,38 @@ type ChangeSetRow struct {
 	Version       string
 }
 
+const changeSetRowLineFormat = "%-16s%v\n"
+
 func (csr *ChangeSetRow) String() string {
-	nameAuthor := ""
+	buffer := bytes.NewBuffer([]byte{})
+
+	fmt.Fprintf(buffer, "ChangeSet - %s\n", csr.Id)
 	if csr.Name != nil {
-		nameAuthor += *csr.Name
+		fmt.Fprintf(buffer, changeSetRowLineFormat, "Name:", *csr.Name)
 	}
 	if csr.Author != nil {
-		if nameAuthor != "" && *csr.Author != "" {
-			nameAuthor += " by "
-		}
-		nameAuthor += *csr.Author
+		fmt.Fprintf(buffer, changeSetRowLineFormat, "Author:", *csr.Author)
 	}
-	if nameAuthor != "" {
-		nameAuthor += "\n"
-	}
+	fmt.Fprintf(buffer, changeSetRowLineFormat, "Executed At:", csr.ExecutedAt.Format(DefaultTimeFormat))
 
-	at := fmt.Sprintf("Executed at %v", csr.ExecutedAt.Format(DefaultTimeFormat))
-	if csr.UpdatedAt != csr.ExecutedAt {
-		at += fmt.Sprintf(" and updated at %v", csr.UpdatedAt.Format(DefaultTimeFormat))
-	}
-
-	return fmt.Sprintf(
-		"ChangeSet - %v\n%v%v",
-		csr.Id,
-		nameAuthor,
-		at,
-	)
+	return strings.TrimRight(buffer.String(), "\n")
 }
 
 func (csr *ChangeSetRow) StringVerbose() string {
+	buffer := bytes.NewBuffer([]byte{})
+
+	fmt.Fprintf(buffer, changeSetRowLineFormat, "SHA-256 Sum:", csr.Sha256Sum)
 	tags := make([]string, 0, len(csr.Tags))
 	for _, tag := range csr.Tags {
 		tags = append(tags, fmt.Sprintf("%q", tag))
 	}
+	tagOutput := "<none>"
+	if len(tags) > 0 {
+		tagOutput = strings.Join(tags, ", ")
+	}
+	fmt.Fprintf(buffer, changeSetRowLineFormat, "Tags:", tagOutput)
 
-	return fmt.Sprintf(
-		`SHA-256 Sum:      %v
-Tags:             %v
-DBSchema Version: %v`,
-		csr.Sha256Sum,
-		strings.Join(tags, ", "),
-		csr.Version,
-	)
+	return strings.TrimRight(buffer.String(), "\n")
 }
 
 func (d *DBSchema) listOrderedChangeSetRows() ([]*ChangeSetRow, error) {
@@ -137,8 +129,14 @@ func scanChangeSetRow(csr *ChangeSetRow, s Scanner) error {
 func parseTags(tags string) ([]string, error) {
 	reader := csv.NewReader(strings.NewReader(tags))
 	row, err := reader.Read()
+	if err == io.EOF {
+		err = nil
+	}
 	if err != nil {
-		return nil, err
+		return nil, &ParsingTagsError{
+			Tags: tags,
+			Err:  err,
+		}
 	}
 	return row, nil
 }
@@ -146,4 +144,5 @@ func parseTags(tags string) ([]string, error) {
 func printChangeSetRow(logger logger.Logger, csr *ChangeSetRow) {
 	fmt.Fprintln(logger.Info(), csr)
 	fmt.Fprintln(logger.Verbose(), csr.StringVerbose())
+	fmt.Fprintln(logger.Info())
 }

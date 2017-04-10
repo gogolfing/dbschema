@@ -6,6 +6,16 @@ import (
 	"strings"
 )
 
+//Flag defaults
+const (
+	DefaultDBMS     = ""
+	DefaultDatabase = ""
+	DefaultHost     = ""
+	DefaultPassword = ""
+	DefaultPort     = 0
+	DefaultUser     = ""
+)
+
 type globalFlags struct {
 	verbose       bool
 	connPath      string
