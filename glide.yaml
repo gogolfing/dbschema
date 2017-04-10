@@ -1,0 +1,7 @@
+package: github.com/gogolfing/dbschema
+import:
+- package: github.com/gogolfing/cli
+  version: ^1.0.1
+  subpackages:
+  - subcommand
+- package: github.com/lib/pq

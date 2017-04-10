@@ -1,0 +1,12 @@
+hash: 17da0da3b61bd0d73aa66fe1daf14cb6f833cfc96f13bf8d29e2f11abbfca572
+updated: 2017-04-06T16:46:49.190312599-05:00
+imports:
+- name: github.com/gogolfing/cli
+  version: d1540f9566ee516e8dafad190b3a2c66458afd27
+  subpackages:
+  - subcommand
+- name: github.com/lib/pq
+  version: 472a0745531a17dbac346e828b4c60e73ddff30c
+  subpackages:
+  - oid
+testImports: []
