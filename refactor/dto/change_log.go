@@ -10,8 +10,8 @@ import (
 type ChangeLog struct {
 	XMLName xml.Name `xml:"ChangeLog"`
 
-	ChangeLogTableName     *string `xml:"tableName,attr"`
-	ChangeLogLockTableName *string `xml:"lockTableName,attr"`
+	TableName     *string `xml:"tableName,attr"`
+	LockTableName *string `xml:"lockTableName,attr"`
 
 	Variables *Variables `xml:"Variables"`
 
@@ -67,9 +67,9 @@ func (c *ChangeLog) copyAttributes(start xml.StartElement) {
 	for _, attr := range start.Attr {
 		switch attr.Name.Local {
 		case "tableName":
-			c.ChangeLogTableName = newString(attr.Value)
+			c.TableName = newString(attr.Value)
 		case "lockTableName":
-			c.ChangeLogLockTableName = newString(attr.Value)
+			c.LockTableName = newString(attr.Value)
 		}
 	}
 }
