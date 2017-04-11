@@ -47,6 +47,17 @@ func NewChangeSetReader(in io.Reader) (*ChangeSet, error) {
 	return c, nil
 }
 
+func (c *ChangeSet) Stmts(ctx Context) (stmts []*Stmt, err error) {
+	for _, changer := range c.changers {
+		temp, err := changer.Stmts(ctx)
+		if err != nil {
+			return nil, err
+		}
+		stmts = append(stmts, temp...)
+	}
+	return
+}
+
 func (c *ChangeSet) UnmarshalXML(dec *xml.Decoder, start xml.StartElement) error {
 	c.XMLName = start.Name
 	for _, attr := range start.Attr {

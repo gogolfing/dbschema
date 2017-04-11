@@ -5,3 +5,4 @@ import:
   subpackages:
   - subcommand
 - package: github.com/lib/pq
+  version: 472a0745531a17dbac346e828b4c60e73ddff30c
