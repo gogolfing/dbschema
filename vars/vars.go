@@ -1,16 +1,15 @@
 package vars
 
 import (
-	"encoding/xml"
 	"fmt"
 	"os"
 	"regexp"
 	"strings"
 )
 
-type ErrDoesNotExist string
+type DoesNotExistError string
 
-func (e ErrDoesNotExist) Error() string {
+func (e DoesNotExistError) Error() string {
 	return fmt.Sprintf("dbschema/vars: variable %q does not exist", string(e))
 }
 
@@ -23,8 +22,6 @@ func (e ErrInvalidReference) Error() string {
 var referenceRegexp = regexp.MustCompile(`^\$\{[^${}]+\}$`)
 
 type Variables struct {
-	XMLName xml.Name `xml:"Variables"`
-
 	values map[string]string
 }
 
@@ -74,45 +71,12 @@ func DereferenceEnv(expr string) (string, error) {
 	if ok {
 		return value, nil
 	}
-	return "", ErrDoesNotExist(expr)
+	return "", DoesNotExistError(expr)
 }
 
 func GetEnvOk(name string) (string, bool) {
 	value := os.Getenv(name)
 	return value, value != ""
-}
-
-func (v *Variables) UnmarshalXML(dec *xml.Decoder, start xml.StartElement) error {
-	v.ensureValuesExist()
-	xmlV := &xmlVariables{}
-	if err := dec.DecodeElement(xmlV, &start); err != nil {
-		return err
-	}
-
-	v.XMLName = xmlV.XMLName
-	for _, variable := range xmlV.Values {
-		v.Put(variable)
-	}
-	return nil
-}
-
-func (v *Variables) ensureValuesExist() {
-	if v.values == nil {
-		v.values = map[string]string{}
-	}
-}
-
-type xmlVariables struct {
-	XMLName xml.Name `xml:"Variables"`
-
-	Values []*Variable `xml:"Variable"`
-}
-
-type Variable struct {
-	XMLName xml.Name `xml:"Variable"`
-
-	Name  string `xml:"name,attr"`
-	Value string `xml:"value,attr"`
 }
 
 func InnerVariableName(expr string) string {
