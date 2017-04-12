@@ -48,7 +48,7 @@ type Dialect interface {
 
 	Cast(in, t string) string
 
-	Placeholder(num int) string
+	Placeholder(index int) string
 
 	//Following are the "variable" methods.
 

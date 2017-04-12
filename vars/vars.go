@@ -36,9 +36,15 @@ func (v *Variables) Merge(other *Variables) {
 	}
 }
 
-func (v *Variables) Put(variable *Variable) {
+func (v *Variables) ensureValuesExist() {
+	if v.values == nil {
+		v.values = map[string]string{}
+	}
+}
+
+func (v *Variables) Put(name, value string) {
 	v.ensureValuesExist()
-	v.values[variable.Name] = variable.Value
+	v.values[name] = value
 }
 
 func (v *Variables) Dereference(expr string) (string, error) {
