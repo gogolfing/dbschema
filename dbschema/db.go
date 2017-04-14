@@ -4,13 +4,11 @@ import (
 	"database/sql"
 	"fmt"
 	"io"
-
-	"github.com/gogolfing/dbschema/refactor"
 )
 
-type ErrUnsupportedDialect string
+type UnsupportedDialectError string
 
-func (e ErrUnsupportedDialect) Error() string {
+func (e UnsupportedDialectError) Error() string {
 	return fmt.Sprintf("dbschema/dbschema: unsupported dialect.Dialect.DBMS() %q", string(e))
 }
 
@@ -27,17 +25,17 @@ type Tx interface {
 }
 
 type QueryExecer interface {
-	Querier
+	Queryer
 	Execer
 }
 
-type Querier interface {
-	Query(stmt *refactor.Stmt) (Rows, error)
-	QueryRow(stmt *refactor.Stmt) Row
+type Queryer interface {
+	Query(query string, args ...interface{}) (Rows, error)
+	QueryRow(query string, args ...interface{}) Row
 }
 
 type Execer interface {
-	Exec(stmt *refactor.Stmt) (sql.Result, error)
+	Exec(query string, args ...interface{}) (sql.Result, error)
 }
 
 type Row interface {

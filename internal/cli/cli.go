@@ -13,6 +13,8 @@ import (
 	"github.com/gogolfing/dbschema/dialect"
 	"github.com/gogolfing/dbschema/logger"
 	"github.com/gogolfing/dbschema/refactor"
+
+	_ "github.com/lib/pq"
 )
 
 type key int
@@ -51,6 +53,8 @@ func registerSubCommands(sc *subcommand.SubCommander) {
 
 	sc.Register(newVersionSubCommand())
 	sc.Register(newStatusSubCommand())
+	sc.Register(newUpSubCommand())
+	sc.Register(newDownSubCommand())
 }
 
 func withGlobalFlags(ctx context.Context, gf *globalFlags) context.Context {
@@ -159,5 +163,5 @@ func createChangeLog(gf *globalFlags) (*refactor.ChangeLog, error) {
 }
 
 func createDBSchema(d dialect.Dialect, conn *conn.Connection, cl *refactor.ChangeLog) (*dbschema.DBSchema, error) {
-	return dbschema.OpenSql(d, conn, cl)
+	return dbschema.Open(d, conn, cl)
 }

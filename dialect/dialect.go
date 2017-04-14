@@ -112,14 +112,14 @@ func Expand(expr string, v *vars.Variables, d Dialect) (string, error) {
 		name := vars.InnerVariableName(expr)
 		if !strings.HasPrefix(name, DialectVariablePrefix) {
 			//not in v and not a Dialect variable.
-			return "", vars.ErrDoesNotExist(origExpr)
+			return "", vars.DoesNotExistError(origExpr)
 		} else {
 			name = strings.TrimPrefix(name, DialectVariablePrefix)
 		}
 
 		value, err = CallVariableMethodOnDialect(d, name)
 		if err != nil {
-			return "", vars.ErrDoesNotExist(origExpr)
+			return "", vars.DoesNotExistError(origExpr)
 		}
 		return value, nil
 	}

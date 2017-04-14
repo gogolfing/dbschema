@@ -20,13 +20,13 @@ const DefaultLockId = "LOCK"
 func (d *DBSchema) init() error {
 	expanded, err := refactor.ExpandAll(
 		d,
-		d.changeLog.ChangeLogTableName.ExpandDefault(DefaultChangeLogTableName),
-		d.changeLog.ChangeLogLockTableName.ExpandDefault(DefaultChangeLogLockTableName),
+		d.changeLog.TableName.DefaultExpander(DefaultChangeLogTableName),
+		d.changeLog.LockTableName.DefaultExpander(DefaultChangeLogLockTableName),
 	)
 	if err != nil {
 		return err
 	}
-	d.changeLogTableName, d.changeLogLockTableName = expanded[0], expanded[1]
+	d.tableName, d.lockTableName = expanded[0], expanded[1]
 
 	if err := d.initTables(); err != nil {
 		return err
@@ -38,10 +38,16 @@ func (d *DBSchema) init() error {
 }
 
 func (d *DBSchema) initTables() error {
-	changeLogTable := createChangeLogTable(d.changeLogTableName)
-	changeLogLockTable := createChangeLogLockTable(d.changeLogLockTableName)
+	changeLogTable := createChangeLogTable(d.tableName)
+	changeLogLockTable := createChangeLogLockTable(d.lockTableName)
+	stmts := []*refactor.Stmt{
+		changeLogTable,
+		changeLogLockTable,
+	}
 
-	return d.executeTxChangers(changeLogTable, changeLogLockTable)
+	return d.executeNewTxWork(func(qe QueryExecer) error {
+		return executeStmts(qe, stmts)
+	})
 }
 
 type lock struct {
@@ -65,7 +71,7 @@ func (e errAlreadyLocked) Error() string {
 			),
 		)
 	}
-	return fmt.Sprintf("dbschema: Already locked...\n%v", strings.Join(lockResult, "\n"))
+	return fmt.Sprintf("dbschema: already locked...\n%v", strings.Join(lockResult, "\n"))
 }
 
 func (d *DBSchema) initLock() error {
@@ -81,15 +87,15 @@ func (d *DBSchema) initLock() error {
 
 		return d.setLock(qe)
 	}
-	return d.executeTxWork(work)
+	return d.executeNewTxWork(work)
 }
 
-func (d *DBSchema) obtainLocks(q Querier) ([]*lock, error) {
+func (d *DBSchema) obtainLocks(q Queryer) ([]*lock, error) {
 	rows, err := q.Query(
-		refactor.NewStmtFmt(
-			"%v\nWHERE %v = 1 AND %v = %v",
+		fmt.Sprintf(
+			"%v WHERE %v = 1 AND %v = %v",
 			d.selectFrom(
-				d.changeLogLockTableName,
+				d.lockTableName,
 				ColumnLockId,
 				ColumnIsLocked,
 				ColumnLockedAt,
@@ -137,19 +143,18 @@ func (d *DBSchema) setLock(e Execer) error {
 	lockedBy := fmt.Sprintf("%v@%v", user.Username, hostname)
 
 	_, err = e.Exec(
-		refactor.NewStmtFmt(
+		fmt.Sprintf(
 			"INSERT INTO %v VALUES (%v, %v, %v, %v)",
-			d.QuoteRef(d.changeLogLockTableName),
+			d.QuoteRef(d.lockTableName),
 			d.Placeholder(0),
 			d.Placeholder(1),
 			d.Placeholder(2),
 			d.Placeholder(3),
-		).AppendParams(
-			DefaultLockId,
-			"1",
-			time.Now().UTC(),
-			lockedBy,
 		),
+		DefaultLockId,
+		"1",
+		time.Now().UTC(),
+		lockedBy,
 	)
 	return err
 }

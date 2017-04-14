@@ -5,7 +5,7 @@ import (
 	"github.com/gogolfing/dbschema/refactor"
 )
 
-func (d *DBSchema) Up(logger logger.Logger, count int) error {
+func (d *DBSchema) Down(logger logger.Logger, count int) error {
 	collectingAppliedChangeSets(logger.Verbose())
 
 	err := d.ensureAppliedChangeSets(true, nil)
@@ -17,25 +17,25 @@ func (d *DBSchema) Up(logger logger.Logger, count int) error {
 	if err != nil {
 		return err
 	}
-	lastOrderExecuted := 0
-	if len(appliedSets) > 0 {
-		lastOrderExecuted = appliedSets[len(appliedSets)-1].OrderExecuted
-	}
 
-	toApply := d.changeLog.ChangeSets[len(appliedSets):]
+	changeSets := d.changeLog.ChangeSets[:len(appliedSets)]
 
 	work := func(qe QueryExecer) error {
-		for i, changeSet := range toApply {
-			stmts, err := refactor.CollectChangersUp(d, changeSet.Changers...)
+		for i := len(changeSets) - 1; i >= 0; i-- {
+			changeSet := changeSets[i]
+
+			stmts, err := refactor.CollectChangersDown(d, changeSet.Changers...)
 			if err != nil {
 				return err
 			}
+
 			//TODO: send a logger here.
 			if err := executeStmts(qe, stmts); err != nil {
 				return err
 			}
+
 			//if not dry run.
-			if err := d.insertIntoChangeLogTable(qe, changeSet, lastOrderExecuted+i+1); err != nil {
+			if err := d.deleteFromChangeLogTable(qe, changeSet); err != nil {
 				return err
 			}
 		}
