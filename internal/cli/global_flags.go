@@ -6,40 +6,26 @@ import (
 	"strings"
 )
 
-//Flag defaults
-const (
-	DefaultDBMS     = ""
-	DefaultDatabase = ""
-	DefaultHost     = ""
-	DefaultPassword = ""
-	DefaultPort     = 0
-	DefaultUser     = ""
-)
-
 type globalFlags struct {
 	verbose       bool
-	connPath      string
 	changeLogPath string
+	conn          string
 	dbms          string
-	host          string
-	port          int
-	user          string
-	password      string
-	database      string
-	connParams    connParams
+}
+
+func newGlobalFlagsDefault() *globalFlags {
+	return &globalFlags{
+		changeLogPath: "changelog.xml",
+		connPath:      "connection.xml",
+	}
 }
 
 func (gf *globalFlags) SetFlags(f *flag.FlagSet) {
+	fmt.Printf("setting flags %p\n", gf)
 	f.BoolVar(&gf.verbose, "v", false, "print verbose output")
-	f.StringVar(&gf.connPath, "conn", "connection.xml", "path to connection file")
+	f.StringVar(&gf.conn, "conn", "", "path to connection file")
 	f.StringVar(&gf.changeLogPath, "changelog", "changelog.xml", "path to change log file")
-	f.StringVar(&gf.dbms, "dbms", "", "the type of the dbms to connect to. this will override the value in -conn if not empty")
-	f.StringVar(&gf.host, "host", "", "host to connect to. this will override the value in -conn if not empty")
-	f.IntVar(&gf.port, "port", 0, "port to connect to. this will override the value in -conn if not zero")
-	f.StringVar(&gf.user, "user", "", "the user to connect to as. this will override the value in -conn if not empty")
-	f.StringVar(&gf.password, "password", "", "password to connect with. this will override the value in -conn if not empty")
-	f.StringVar(&gf.database, "database", "", "database to connect to. this will override the value in -conn if not empty")
-	f.Var(&gf.connParams, "conn-param", "list of connection parameters in the form <name>=<value>. should be set with multiple flag definitions. these will override already set parameters in -conn")
+	f.StringVar(&gf.dbms, "dbms", "", "the type of the dbms to connect to. this will override the DBSCHEMA_DBMS environment variable if set")
 }
 
 type connParams [][2]string

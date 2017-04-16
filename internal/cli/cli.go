@@ -8,7 +8,6 @@ import (
 
 	"github.com/gogolfing/cli"
 	"github.com/gogolfing/cli/subcommand"
-	"github.com/gogolfing/dbschema/conn"
 	"github.com/gogolfing/dbschema/dbschema"
 	"github.com/gogolfing/dbschema/dialect"
 	"github.com/gogolfing/dbschema/logger"
@@ -33,6 +32,8 @@ func Run(args []string) error {
 	registerSubCommands(sc)
 
 	ctx := withGlobalFlags(context.Background(), gf)
+
+	fmt.Printf("%p\n", gf)
 
 	err := sc.ExecuteContext(
 		ctx,
@@ -91,13 +92,10 @@ func execClose(dbschema *dbschema.DBSchema, f func() error) (err error) {
 
 func newDBSchemaLogger(ctx context.Context, out, outErr io.Writer) (*dbschema.DBSchema, logger.Logger, error) {
 	gf := globalFlagsFrom(ctx)
+	fmt.Printf("%p\n", gf)
 
 	logger := createLogger(gf, out, outErr)
 
-	conn, err := createConnection(gf)
-	if err != nil {
-		return nil, nil, &CreateConnectionError{err}
-	}
 	dialect, err := createDialect(conn)
 	if err != nil {
 		return nil, nil, &CreateDialectError{err}
@@ -121,40 +119,7 @@ func createLogger(gf *globalFlags, out, outErr io.Writer) logger.Logger {
 	return logger.NewLoggerWriters(verbose, out, out, outErr)
 }
 
-func createConnection(gf *globalFlags) (*conn.Connection, error) {
-	conn, err := conn.NewConnectionFile(gf.connPath)
-	if err != nil {
-		return nil, err
-	}
-	if gf.dbms != DefaultDBMS {
-		conn.DBMS = gf.dbms
-	}
-	if gf.host != DefaultHost {
-		conn.Host = gf.host
-	}
-	if gf.port != DefaultPort {
-		conn.Port = gf.port
-	}
-	if gf.user != DefaultUser {
-		conn.User = gf.user
-	}
-	if gf.password != DefaultPassword {
-		conn.Password = gf.password
-	}
-	if gf.database != DefaultDatabase {
-		conn.Database = gf.database
-	}
-	gf.connParams.eachKeyValue(func(name, value string) {
-		conn.PutParam(name, value)
-	})
-	return conn, nil
-}
-
-func createDialect(conn *conn.Connection) (dialect.Dialect, error) {
-	dbms, err := conn.DBMSValue()
-	if err != nil {
-		return nil, err
-	}
+func createDialect(dbms string) (dialect.Dialect, error) {
 	return dialect.NewDialect(dbms)
 }
 

@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gogolfing/dbschema/conn"
 	"github.com/gogolfing/dbschema/dialect"
 	"github.com/gogolfing/dbschema/refactor"
 )
@@ -28,7 +27,7 @@ type DBSchema struct {
 	lockTableName string
 }
 
-func Open(dialect dialect.Dialect, conn *conn.Connection, changeLog *refactor.ChangeLog) (*DBSchema, error) {
+func Open(dialect dialect.Dialect, conn string, changeLog *refactor.ChangeLog) (*DBSchema, error) {
 	sqlDB, err := openSqlDB(dialect, conn)
 	if err != nil {
 		return nil, err

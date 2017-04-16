@@ -3,7 +3,6 @@ package dbschema
 import (
 	"database/sql"
 
-	"github.com/gogolfing/dbschema/conn"
 	"github.com/gogolfing/dbschema/dialect"
 )
 
@@ -11,7 +10,7 @@ type sqlDB struct {
 	db *sql.DB
 }
 
-func openSqlDB(d dialect.Dialect, conn *conn.Connection) (DB, error) {
+func openSqlDB(d dialect.Dialect, conn string) (DB, error) {
 	dbmsToDriver := map[string]string{
 		dialect.Postgresql: "postgres",
 	}
@@ -19,11 +18,7 @@ func openSqlDB(d dialect.Dialect, conn *conn.Connection) (DB, error) {
 	if !ok {
 		return nil, UnsupportedDialectError(d.DBMS())
 	}
-	connString, err := d.ConnectionString(conn)
-	if err != nil {
-		return nil, err
-	}
-	db, err := sql.Open(driverName, connString)
+	db, err := sql.Open(driverName, conn)
 	if err != nil {
 		return nil, err
 	}

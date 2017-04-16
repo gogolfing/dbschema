@@ -6,7 +6,6 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/gogolfing/dbschema/conn"
 	"github.com/gogolfing/dbschema/vars"
 )
 
@@ -37,8 +36,6 @@ func (e ErrUnsupportedDBMS) Error() string {
 //Dialect is the contract that all database types must implement for dbschema to
 //generate the correct SQL for a given DBMS dialect.
 type Dialect interface {
-	ConnectionString(conn *conn.Connection) (string, error)
-
 	DBMS() string
 
 	QuoteRef(in string) string
@@ -124,22 +121,6 @@ func Expand(expr string, v *vars.Variables, d Dialect) (string, error) {
 		return value, nil
 	}
 	return expr, nil
-}
-
-type dialect struct {
-	connectionString func(conn *conn.Connection) (string, error)
-	*DialectStruct
-}
-
-func newDialect(connStringFunc func(*conn.Connection) (string, error), ds *DialectStruct) Dialect {
-	return &dialect{
-		connectionString: connStringFunc,
-		DialectStruct:    ds,
-	}
-}
-
-func (d *dialect) ConnectionString(conn *conn.Connection) (string, error) {
-	return d.connectionString(conn)
 }
 
 func CallVariableMethodOnDialect(d Dialect, name string) (value string, err error) {
