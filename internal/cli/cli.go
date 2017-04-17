@@ -22,6 +22,11 @@ const keyGlobalFlags key = iota
 
 const CommandName = "dbschema"
 
+const (
+	ENV_VAR_CONN_STRING = "DBSCHEMA_CONN"
+	ENV_VAR_DBMS        = "DBSCHEMA_DBMS"
+)
+
 func Run(args []string) error {
 	gf := &globalFlags{}
 
@@ -32,8 +37,6 @@ func Run(args []string) error {
 	registerSubCommands(sc)
 
 	ctx := withGlobalFlags(context.Background(), gf)
-
-	fmt.Printf("%p\n", gf)
 
 	err := sc.ExecuteContext(
 		ctx,
@@ -92,15 +95,15 @@ func execClose(dbschema *dbschema.DBSchema, f func() error) (err error) {
 
 func newDBSchemaLogger(ctx context.Context, out, outErr io.Writer) (*dbschema.DBSchema, logger.Logger, error) {
 	gf := globalFlagsFrom(ctx)
-	fmt.Printf("%p\n", gf)
 
+	conn, dbms := getConnAndDMBS(gf)
 	logger := createLogger(gf, out, outErr)
 
-	dialect, err := createDialect(conn)
+	dialect, err := createDialect(dbms)
 	if err != nil {
 		return nil, nil, &CreateDialectError{err}
 	}
-	changeLog, err := createChangeLog(gf)
+	changeLog, err := createChangeLog(gf.changeLogPath)
 	if err != nil {
 		return nil, nil, &CreateChangeLogError{err}
 	}
@@ -109,6 +112,20 @@ func newDBSchemaLogger(ctx context.Context, out, outErr io.Writer) (*dbschema.DB
 		return nil, nil, &CreateDBSchemaError{err}
 	}
 	return dbschema, logger, nil
+}
+
+func getConnAndDMBS(gf *globalFlags) (string, string) {
+	conn := os.Getenv(ENV_VAR_CONN_STRING)
+	if gf.conn != "" {
+		conn = gf.conn
+	}
+
+	dbms := os.Getenv(ENV_VAR_DBMS)
+	if gf.dbms != "" {
+		dbms = gf.dbms
+	}
+
+	return conn, dbms
 }
 
 func createLogger(gf *globalFlags, out, outErr io.Writer) logger.Logger {
@@ -120,13 +137,19 @@ func createLogger(gf *globalFlags, out, outErr io.Writer) logger.Logger {
 }
 
 func createDialect(dbms string) (dialect.Dialect, error) {
+	if dbms == "" {
+		return nil, fmt.Errorf("dbschema: value for dbms cannot be empty. please set the %s environment variable or the -dbms flag", ENV_VAR_DBMS)
+	}
 	return dialect.NewDialect(dbms)
 }
 
-func createChangeLog(gf *globalFlags) (*refactor.ChangeLog, error) {
-	return refactor.NewChangeLogFile(gf.changeLogPath)
+func createChangeLog(path string) (*refactor.ChangeLog, error) {
+	return refactor.NewChangeLogFile(path)
 }
 
-func createDBSchema(d dialect.Dialect, conn *conn.Connection, cl *refactor.ChangeLog) (*dbschema.DBSchema, error) {
+func createDBSchema(d dialect.Dialect, conn string, cl *refactor.ChangeLog) (*dbschema.DBSchema, error) {
+	if conn == "" {
+		return nil, fmt.Errorf("dbschema: value for conn cannot be empty. please set the %s environment variable or the -conn flag", ENV_VAR_CONN_STRING)
+	}
 	return dbschema.Open(d, conn, cl)
 }

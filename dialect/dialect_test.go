@@ -3,18 +3,13 @@ package dialect
 import (
 	"reflect"
 	"testing"
-
-	"github.com/gogolfing/dbschema/conn"
 )
 
 func TestCallVariableMethodOnDialect(t *testing.T) {
-	d := newDialect(
-		func(_ *conn.Connection) (string, error) { return "connection_string", nil },
-		&DialectStruct{
-			IntegerValue: "int",
-			BoolValue:    "boolean",
-		},
-	)
+	d := &DialectStruct{
+		IntegerValue: "int",
+		BoolValue:    "boolean",
+	}
 
 	tests := []struct {
 		name      string

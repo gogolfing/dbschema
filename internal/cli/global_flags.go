@@ -13,18 +13,10 @@ type globalFlags struct {
 	dbms          string
 }
 
-func newGlobalFlagsDefault() *globalFlags {
-	return &globalFlags{
-		changeLogPath: "changelog.xml",
-		connPath:      "connection.xml",
-	}
-}
-
 func (gf *globalFlags) SetFlags(f *flag.FlagSet) {
-	fmt.Printf("setting flags %p\n", gf)
 	f.BoolVar(&gf.verbose, "v", false, "print verbose output")
-	f.StringVar(&gf.conn, "conn", "", "path to connection file")
 	f.StringVar(&gf.changeLogPath, "changelog", "changelog.xml", "path to change log file")
+	f.StringVar(&gf.conn, "conn", "", "path to connection file")
 	f.StringVar(&gf.dbms, "dbms", "", "the type of the dbms to connect to. this will override the DBSCHEMA_DBMS environment variable if set")
 }
 
