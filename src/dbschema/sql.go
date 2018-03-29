@@ -3,7 +3,7 @@ package dbschema
 import (
 	"database/sql"
 
-	"github.com/gogolfing/dbschema/dialect"
+	"github.com/gogolfing/dbschema/src/dialect"
 )
 
 type sqlDB struct {

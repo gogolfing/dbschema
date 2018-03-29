@@ -1,6 +1,6 @@
 package dbschema
 
-import "github.com/gogolfing/dbschema/refactor"
+import "github.com/gogolfing/dbschema/src/refactor"
 
 //Constants for change log column names.
 const (

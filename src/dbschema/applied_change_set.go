@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gogolfing/dbschema/logger"
+	"github.com/gogolfing/dbschema/src/logger"
 )
 
 type AppliedChangeSet struct {

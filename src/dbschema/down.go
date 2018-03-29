@@ -1,8 +1,8 @@
 package dbschema
 
 import (
-	"github.com/gogolfing/dbschema/logger"
-	"github.com/gogolfing/dbschema/refactor"
+	"github.com/gogolfing/dbschema/src/logger"
+	"github.com/gogolfing/dbschema/src/refactor"
 )
 
 func (d *DBSchema) Down(logger logger.Logger, count int) error {

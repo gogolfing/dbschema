@@ -7,7 +7,7 @@ import (
 	"runtime"
 
 	"github.com/gogolfing/cli/subcommand"
-	"github.com/gogolfing/dbschema/dbschema"
+	"github.com/gogolfing/dbschema/src/dbschema"
 )
 
 func newVersionSubCommand() subcommand.SubCommand {

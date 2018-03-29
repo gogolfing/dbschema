@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/gogolfing/dbschema/vars"
+	"github.com/gogolfing/dbschema/src/vars"
 )
 
 //SQL constructs that are the same accross supported dialects.

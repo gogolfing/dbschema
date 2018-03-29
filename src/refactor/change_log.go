@@ -1,8 +1,8 @@
 package refactor
 
 import (
-	"github.com/gogolfing/dbschema/refactor/dto"
-	"github.com/gogolfing/dbschema/vars"
+	"github.com/gogolfing/dbschema/src/refactor/dto"
+	"github.com/gogolfing/dbschema/src/vars"
 )
 
 type ChangeLog struct {

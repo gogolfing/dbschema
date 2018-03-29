@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gogolfing/dbschema/refactor"
+	"github.com/gogolfing/dbschema/src/refactor"
 )
 
 const (

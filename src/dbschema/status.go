@@ -3,7 +3,7 @@ package dbschema
 import (
 	"fmt"
 
-	"github.com/gogolfing/dbschema/logger"
+	"github.com/gogolfing/dbschema/src/logger"
 )
 
 func (d *DBSchema) Status(logger logger.Logger) error {

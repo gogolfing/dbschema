@@ -3,7 +3,9 @@ package main
 import (
 	"os"
 
-	"github.com/gogolfing/dbschema/internal/cli"
+	"github.com/gogolfing/dbschema/src/cli"
+
+	_ "github.com/lib/pq"
 )
 
 func main() {

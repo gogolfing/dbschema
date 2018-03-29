@@ -1,6 +1,6 @@
 package refactor
 
-import "github.com/gogolfing/dbschema/refactor/dto"
+import "github.com/gogolfing/dbschema/src/refactor/dto"
 
 type Changer interface {
 	Up(ctx Context) ([]*Stmt, error)

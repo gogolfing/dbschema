@@ -8,12 +8,10 @@ import (
 
 	"github.com/gogolfing/cli"
 	"github.com/gogolfing/cli/subcommand"
-	"github.com/gogolfing/dbschema/dbschema"
-	"github.com/gogolfing/dbschema/dialect"
-	"github.com/gogolfing/dbschema/logger"
-	"github.com/gogolfing/dbschema/refactor"
-
-	_ "github.com/lib/pq"
+	"github.com/gogolfing/dbschema/src/dbschema"
+	"github.com/gogolfing/dbschema/src/dialect"
+	"github.com/gogolfing/dbschema/src/logger"
+	"github.com/gogolfing/dbschema/src/refactor"
 )
 
 type key int

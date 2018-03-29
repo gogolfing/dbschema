@@ -3,7 +3,7 @@ package refactor
 import (
 	"fmt"
 
-	"github.com/gogolfing/dbschema/refactor/dto"
+	"github.com/gogolfing/dbschema/src/refactor/dto"
 )
 
 type UnknownDTOChangerError struct {

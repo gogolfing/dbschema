@@ -10,11 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gogolfing/dbschema/dialect"
-	"github.com/gogolfing/dbschema/refactor"
+	"github.com/gogolfing/dbschema/src/dialect"
+	"github.com/gogolfing/dbschema/src/refactor"
 )
-
-const DefaultTimeFormat = time.RFC1123Z
 
 type DBSchema struct {
 	db DB
