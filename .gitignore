@@ -2,5 +2,8 @@
 changelog.xml
 connection.xml
 
+#Ignore executables.
+dbschema
+
 #Ignore external dependencies.
 vendor/

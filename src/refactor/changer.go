@@ -1,12 +1,17 @@
 package refactor
 
-import "github.com/gogolfing/dbschema/src/refactor/dto"
-
+//Changer is the interface that wraps the Up and Down methods.
+//
+//The Up and Down methods should be thought of as opposites that offset eachother.
+//For instance, a CreateTable Changer would create a table in Up and drop it in Down.
 type Changer interface {
+	//Up should return a slice of Stmt(s) that will be executed on the database
+	//in order to "up" the state.
 	Up(ctx Context) ([]*Stmt, error)
-	Down(ctx Context) ([]*Stmt, error)
 
-	DTO() (dto.Changer, error)
+	//Down should return a slice of Stmt(s) that will be executed on the database
+	//in order to "down" the state.
+	Down(ctx Context) ([]*Stmt, error)
 }
 
 func CollectChangersUp(ctx Context, changers ...Changer) ([]*Stmt, error) {

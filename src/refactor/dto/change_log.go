@@ -4,9 +4,46 @@ import (
 	"encoding/xml"
 	"io"
 	"os"
-	"path"
+	"path/filepath"
+
+	"github.com/gogolfing/dbschema/src/refactor"
 )
 
+const (
+	TableNameAttr     = "tableName"
+	LockTableNameAttr = "lockTableName"
+)
+
+const (
+	ElementTypeVariables = "Variables"
+	ElementTypeImport    = "Import"
+	ElementTypeChangeSet = "ChangeSet"
+)
+
+//UnmarshalChangeLogXMLPath returns an XML parsed ChangeLog from the file at path.
+func UnmarshalChangeLogXMLPath(path string) (*ChangeLog, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	return UnmarshalChangeLogXMLReader(path, file)
+}
+
+//UnmarshalChangeLogXMLReader returns an XML parsed ChangeLog from r.
+func UnmarshalChangeLogXMLReader(path string, r io.Reader) (*ChangeLog, error) {
+	cl := newChangeLog(path)
+
+	dec := xml.NewDecoder(r)
+	if err := dec.Decode(cl); err != nil {
+		return nil, err
+	}
+
+	return cl, nil
+}
+
+//ChangeLog is the (un)marshalable type representing a refactor.ChangeLog.
 type ChangeLog struct {
 	XMLName xml.Name `xml:"ChangeLog"`
 
@@ -20,31 +57,25 @@ type ChangeLog struct {
 	path string
 }
 
-func NewChangeLogFile(path string) (*ChangeLog, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, err
+func newChangeLog(path string) *ChangeLog {
+	return &ChangeLog{
+		Variables: &Variables{},
+		path:      path,
 	}
-	defer file.Close()
-	return NewChangeLogReader(path, file)
 }
 
-func NewChangeLogReader(path string, in io.Reader) (*ChangeLog, error) {
-	dec := xml.NewDecoder(in)
-	c := &ChangeLog{}
-	c.path = path
-	if err := dec.Decode(c); err != nil {
-		return nil, err
-	}
-	return c, nil
+//RefactorType returns a refactor.ChangeLog that is equivalent to cl.
+func (cl *ChangeLog) RefactorType() *refactor.ChangeLog {
+	//TODO impl.
+	return nil
 }
 
-func (c *ChangeLog) UnmarshalXML(dec *xml.Decoder, start xml.StartElement) error {
-	c.XMLName = start.Name
-	c.ensureVariablesExist()
-	c.copyAttributes(start)
+//UnmarshalXML is the XMLUnmarshaler implementation.
+func (cl *ChangeLog) UnmarshalXML(dec *xml.Decoder, start xml.StartElement) error {
+	cl.XMLName = start.Name
+	cl.copyAttributes(start)
 
-	for token, _ := dec.Token(); !isXMLTokenEndElement(token); token, _ = dec.Token() {
+	for token, _ := dec.Token(); !IsXMLTokenEndElement(token); token, _ = dec.Token() {
 		//we do not care about anything that is not an xml.StartElement.
 		//and because of the for loop before, it cannot be an xml.EndElement.
 		switch token.(type) {
@@ -55,7 +86,7 @@ func (c *ChangeLog) UnmarshalXML(dec *xml.Decoder, start xml.StartElement) error
 		if !ok {
 			return errUnknownTokenType
 		}
-		if err := c.unmarshalXMLInnerElement(dec, innerStart); err != nil {
+		if err := cl.unmarshalXMLInnerElement(dec, innerStart); err != nil {
 			return err
 		}
 	}
@@ -63,79 +94,76 @@ func (c *ChangeLog) UnmarshalXML(dec *xml.Decoder, start xml.StartElement) error
 	return nil
 }
 
-func (c *ChangeLog) copyAttributes(start xml.StartElement) {
+func (cl *ChangeLog) copyAttributes(start xml.StartElement) {
 	for _, attr := range start.Attr {
 		switch attr.Name.Local {
-		case "tableName":
-			c.TableName = newString(attr.Value)
-		case "lockTableName":
-			c.LockTableName = newString(attr.Value)
+		case TableNameAttr:
+			cl.TableName = NewString(attr.Value)
+		case LockTableNameAttr:
+			cl.LockTableName = NewString(attr.Value)
 		}
 	}
 }
 
-func (c *ChangeLog) unmarshalXMLInnerElement(dec *xml.Decoder, innerStart xml.StartElement) error {
+func (cl *ChangeLog) unmarshalXMLInnerElement(dec *xml.Decoder, innerStart xml.StartElement) error {
 	switch innerStart.Name.Local {
-	case "Variables":
-		return c.unmarshalXMLInnerVariables(dec, innerStart)
-	case "Import":
-		return c.unmarshalXMLInnerImport(dec, innerStart)
-	case "ChangeSet":
-		return c.unmarshalXMLInnerChangeSet(dec, innerStart)
+	case ElementTypeVariables:
+		return cl.unmarshalXMLInnerVariables(dec, innerStart)
+	case ElementTypeImport:
+		return cl.unmarshalXMLInnerImport(dec, innerStart)
+	case ElementTypeChangeSet:
+		return cl.unmarshalXMLInnerChangeSet(dec, innerStart)
 	}
+
 	return dec.Skip()
 }
 
-func (c *ChangeLog) unmarshalXMLInnerVariables(dec *xml.Decoder, startVariables xml.StartElement) error {
-	vars := &Variables{}
-	if err := dec.DecodeElement(vars, &startVariables); err != nil {
+func (cl *ChangeLog) unmarshalXMLInnerVariables(dec *xml.Decoder, start xml.StartElement) error {
+	vars := newVariables()
+	if err := dec.DecodeElement(vars, &start); err != nil {
 		return err
 	}
-	c.Variables.Values = append(c.Variables.Values, vars.Values...)
+
+	cl.Variables.Values = append(cl.Variables.Values, vars.Values...)
 	return nil
 }
 
-func (c *ChangeLog) unmarshalXMLInnerImport(dec *xml.Decoder, startImport xml.StartElement) error {
-	imp := &Import{}
-	if err := dec.DecodeElement(imp, &startImport); err != nil {
+func (cl *ChangeLog) unmarshalXMLInnerImport(dec *xml.Decoder, start xml.StartElement) error {
+	imp := newImport()
+	if err := dec.DecodeElement(imp, &start); err != nil {
 		return err
 	}
+
 	if imp.Path == "" {
 		return InvalidImportPathError(imp.Path)
 	}
-	path := c.importPath(imp.Path)
-	cs, err := NewChangeSetFile(path)
+	if err := imp.Validate(); err != nil {
+		return err
+	}
+
+	cs, err := NewChangeSetFile(cl.importPath(imp.Path))
 	if err != nil {
 		return err
 	}
-	c.ChangeSets = append(c.ChangeSets, cs)
+
+	cl.ChangeSets = append(cl.ChangeSets, cs)
 	return nil
 }
 
-func (c *ChangeLog) unmarshalXMLInnerChangeSet(dec *xml.Decoder, startChangeSet xml.StartElement) error {
-	cs := &ChangeSet{}
-	if err := dec.DecodeElement(cs, &startChangeSet); err != nil {
+func (cl *ChangeLog) unmarshalXMLInnerChangeSet(dec *xml.Decoder, start xml.StartElement) error {
+	cs := newChangeSet()
+	if err := dec.DecodeElement(cs, &start); err != nil {
 		return err
 	}
-	c.ChangeSets = append(c.ChangeSets, cs)
+
+	cl.ChangeSets = append(cl.ChangeSets, cs)
 	return nil
 }
 
-func (c *ChangeLog) importPath(relPath string) string {
-	if c.path == "" {
+func (cl *ChangeLog) importPath(relPath string) string {
+	if cl.path == "" {
 		return relPath
 	}
-	return path.Join(path.Dir(c.path), relPath)
-}
 
-func (c *ChangeLog) ensureVariablesExist() {
-	if c.Variables == nil {
-		c.Variables = &Variables{}
-	}
-}
-
-type Import struct {
-	XMLName xml.Name `xml:"Import"`
-
-	Path string `xml:"path,attr"`
+	return filepath.Join(filepath.Dir(cl.path), relPath)
 }

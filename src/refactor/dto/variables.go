@@ -8,6 +8,10 @@ type Variables struct {
 	Values []*Variable `xml:"Variable"`
 }
 
+func newVariables() *Variables {
+	return &Variables{}
+}
+
 type Variable struct {
 	XMLName xml.Name `xml:"Variable"`
 

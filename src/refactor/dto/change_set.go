@@ -20,6 +20,10 @@ type ChangeSet struct {
 	Changers []Changer
 }
 
+func newChangeSet() *ChangeSet {
+	return &ChangeSet{}
+}
+
 func NewChangeSetFile(path string) (*ChangeSet, error) {
 	file, err := os.Open(path)
 	if err != nil {
@@ -51,9 +55,9 @@ func (c *ChangeSet) UnmarshalXML(dec *xml.Decoder, start xml.StartElement) error
 		case "id":
 			c.Id = attr.Value
 		case "name":
-			c.Name = newString(attr.Value)
+			c.Name = NewString(attr.Value)
 		case "author":
-			c.Author = newString(attr.Value)
+			c.Author = NewString(attr.Value)
 		}
 	}
 
@@ -68,7 +72,7 @@ func (c *ChangeSet) UnmarshalXML(dec *xml.Decoder, start xml.StartElement) error
 
 func decodeInnerChangers(dec *xml.Decoder, start xml.StartElement) ([]Changer, error) {
 	result := []Changer{}
-	for token, _ := dec.Token(); !isXMLTokenEndElement(token); token, _ = dec.Token() {
+	for token, _ := dec.Token(); !IsXMLTokenEndElement(token); token, _ = dec.Token() {
 		//we do not care about anything that is not an xml.StartElement.
 		//and because of the for loop before, it cannot be an xml.EndElement.
 		switch token.(type) {
