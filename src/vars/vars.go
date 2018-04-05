@@ -25,6 +25,12 @@ type Variables struct {
 	values map[string]string
 }
 
+func NewVariables() *Variables {
+	return &Variables{
+		values: map[string]string{},
+	}
+}
+
 func (v *Variables) Len() int {
 	return len(v.values)
 }

@@ -66,8 +66,12 @@ func newChangeLog(path string) *ChangeLog {
 
 //RefactorType returns a refactor.ChangeLog that is equivalent to cl.
 func (cl *ChangeLog) RefactorType() *refactor.ChangeLog {
-	//TODO impl.
-	return nil
+	return &refactor.ChangeLog{
+		TableName:     refactor.NewNullString(cl.TableName),
+		LockTableName: refactor.NewNullString(cl.LockTableName),
+		Variables:     cl.Variables.RefactorType(),
+		ChangeSets:    ChangeSets(cl.ChangeSets).RefactorType(),
+	}
 }
 
 //UnmarshalXML is the XMLUnmarshaler implementation.
@@ -75,7 +79,7 @@ func (cl *ChangeLog) UnmarshalXML(dec *xml.Decoder, start xml.StartElement) erro
 	cl.XMLName = start.Name
 	cl.copyAttributes(start)
 
-	for token, _ := dec.Token(); !IsXMLTokenEndElement(token); token, _ = dec.Token() {
+	for token, _ := dec.Token(); !isXMLTokenEndElement(token); token, _ = dec.Token() {
 		//we do not care about anything that is not an xml.StartElement.
 		//and because of the for loop before, it cannot be an xml.EndElement.
 		switch token.(type) {
@@ -141,7 +145,7 @@ func (cl *ChangeLog) unmarshalXMLInnerImport(dec *xml.Decoder, start xml.StartEl
 		return err
 	}
 
-	cs, err := NewChangeSetFile(cl.importPath(imp.Path))
+	cs, err := UnmarshalChangeSetXMLPath(cl.importPath(imp.Path))
 	if err != nil {
 		return err
 	}

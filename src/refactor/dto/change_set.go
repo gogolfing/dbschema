@@ -4,9 +4,37 @@ import (
 	"encoding/xml"
 	"io"
 	"os"
+
+	"github.com/gogolfing/dbschema/src/refactor"
 )
 
-type Changer interface{}
+type ChangeSets []*ChangeSet
+
+func (cs ChangeSets) RefactorType() []*refactor.ChangeSet {
+	result := make([]*refactor.ChangeSet, len(cs))
+	for i, v := range cs {
+		result[i] = v.RefactorType()
+	}
+	return result
+}
+
+func UnmarshalChangeSetXMLPath(path string) (*ChangeSet, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	return UnmarshalChangeSetXMLReader(file)
+}
+
+func UnmarshalChangeSetXMLReader(r io.Reader) (*ChangeSet, error) {
+	dec := xml.NewDecoder(r)
+	cs := newChangeSet()
+
+	err := dec.Decode(cs)
+	return cs, err
+}
 
 type ChangeSet struct {
 	XMLName xml.Name `xml:"ChangeSet"`
@@ -24,27 +52,14 @@ func newChangeSet() *ChangeSet {
 	return &ChangeSet{}
 }
 
-func NewChangeSetFile(path string) (*ChangeSet, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, err
+func (cs *ChangeSet) RefactorType() *refactor.ChangeSet {
+	return &refactor.ChangeSet{
+		Id:       cs.Id,
+		Name:     refactor.NewNullString(cs.Name),
+		Author:   refactor.NewNullString(cs.Author),
+		Tags:     nil,
+		Changers: nil,
 	}
-	defer file.Close()
-	c, err := NewChangeSetReader(file)
-	if err != nil {
-		return nil, err
-	}
-	return c, nil
-}
-
-func NewChangeSetReader(in io.Reader) (*ChangeSet, error) {
-	dec := xml.NewDecoder(in)
-	c := &ChangeSet{}
-	err := dec.Decode(c)
-	if err != nil {
-		return nil, err
-	}
-	return c, nil
 }
 
 func (c *ChangeSet) UnmarshalXML(dec *xml.Decoder, start xml.StartElement) error {
@@ -72,7 +87,7 @@ func (c *ChangeSet) UnmarshalXML(dec *xml.Decoder, start xml.StartElement) error
 
 func decodeInnerChangers(dec *xml.Decoder, start xml.StartElement) ([]Changer, error) {
 	result := []Changer{}
-	for token, _ := dec.Token(); !IsXMLTokenEndElement(token); token, _ = dec.Token() {
+	for token, _ := dec.Token(); !isXMLTokenEndElement(token); token, _ = dec.Token() {
 		//we do not care about anything that is not an xml.StartElement.
 		//and because of the for loop before, it cannot be an xml.EndElement.
 		switch token.(type) {
@@ -94,17 +109,17 @@ func decodeInnerChangers(dec *xml.Decoder, start xml.StartElement) ([]Changer, e
 	return result, nil
 }
 
-func decodeInnerChanger(dec *xml.Decoder, innerStart xml.StartElement) (Changer, error) {
+func decodeInnerChanger(dec *xml.Decoder, start xml.StartElement) (Changer, error) {
 	var changer Changer
 
-	switch innerStart.Name.Local {
-	case "RawSql":
-		changer = &RawSql{}
+	switch start.Name.Local {
+	case "RawSQL":
+		changer = &RawSQL{}
 	default:
-		return nil, UnknownChangerTypeError(innerStart.Name.Local)
+		return nil, UnknownChangerTypeError(start.Name.Local)
 	}
 
-	if err := dec.DecodeElement(changer, &innerStart); err != nil {
+	if err := dec.DecodeElement(changer, &start); err != nil {
 		return nil, err
 	}
 

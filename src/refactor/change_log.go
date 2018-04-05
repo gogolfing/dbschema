@@ -1,9 +1,5 @@
 package refactor
 
-import (
-	"github.com/gogolfing/dbschema/src/vars"
-)
-
 //ChangeLog is the top level entity that DBSchema works with.
 //It contains a slice of ChangeSets that DBSchema will make on the database.
 type ChangeLog struct {
@@ -16,7 +12,7 @@ type ChangeLog struct {
 	LockTableName NullString
 
 	//Variables are the variables set in a ChangeLog.
-	Variables *vars.Variables
+	Variables *Variables
 
 	//ChangeSets are the ChangeSet(s) to apply on the database.
 	ChangeSets []*ChangeSet

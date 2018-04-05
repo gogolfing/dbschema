@@ -8,19 +8,19 @@ import (
 
 func TestRawSql_UnmarshalXML(t *testing.T) {
 	raw := `
-		<RawSql>
+		<RawSQL>
 			<Up>
 				<Stmt>a</Stmt>
 			</Up>
 			<Down>
 				<Stmt>b</Stmt>
 			</Down>
-		</RawSql>
+		</RawSQL>
 	`
 
 	dec := xml.NewDecoder(strings.NewReader(raw))
 
-	rawSql := &RawSql{}
+	rawSql := &RawSQL{}
 	if err := dec.Decode(rawSql); err != nil {
 		t.Fatal(err)
 	}

@@ -1,6 +1,10 @@
 package dto
 
-import "encoding/xml"
+import (
+	"encoding/xml"
+
+	"github.com/gogolfing/dbschema/src/refactor"
+)
 
 type Variables struct {
 	XMLName xml.Name `xml:"Variables"`
@@ -10,6 +14,16 @@ type Variables struct {
 
 func newVariables() *Variables {
 	return &Variables{}
+}
+
+func (v *Variables) RefactorType() *refactor.Variables {
+	result := refactor.NewVariables()
+
+	for _, value := range v.Values {
+		result.Put(value.Name, value.Value)
+	}
+
+	return result
 }
 
 type Variable struct {

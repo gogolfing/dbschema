@@ -8,7 +8,7 @@ import (
 type InvalidImportPathError string
 
 func (e InvalidImportPathError) Error() string {
-	return fmt.Sprintf("dbschema/refactor/dto: invalid import path %q", string(e))
+	return fmt.Sprintf("refactor/dto: invalid import path %q", string(e))
 }
 
 type Import struct {

@@ -1,9 +1,5 @@
 package refactor
 
-import (
-	"crypto/sha256"
-)
-
 type ChangeSet struct {
 	Id string
 
@@ -15,18 +11,15 @@ type ChangeSet struct {
 	Changers []Changer
 }
 
+/*
 func (c *ChangeSet) Sha256Sum() ([]byte, error) {
 	hash := sha256.New()
-	// for _, changer := range c.Changers {
-	// 	dto, err := changer.DTO()
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	b, err := xml.Marshal(dto)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	hash.Write(b)
-	// }
+	enc := xml.NewEncoder(hash)
+	for _, changer := range c.Changers {
+		if err := dto.EncodeRefactorChangerXML(enc, changer); err != nil {
+			return err
+		}
+	}
 	return hash.Sum(nil), nil
 }
+*/

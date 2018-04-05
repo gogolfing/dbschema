@@ -1,19 +1,39 @@
 package dto
 
-import "encoding/xml"
+import (
+	"encoding/xml"
 
-type RawSql struct {
-	XMLName xml.Name `xml:"RawSql"`
+	"github.com/gogolfing/dbschema/src/refactor"
+)
 
-	Up struct {
-		XMLName xml.Name `xml:"Up"`
+type RawSQL struct {
+	XMLName xml.Name `xml:"RawSQL"`
 
-		Stmts []*Stmt `xml:"Stmt"`
+	Up *RawSQLStmts `xml:"Up"`
+
+	Down *RawSQLStmts `xml:"Down"`
+}
+
+func TransformRawSQL(c *refactor.RawSQL) *RawSQL {
+	return &RawSQL{
+		Up:   TransformSQLStmts(c.UpStmts),
+		Down: TransformSQLStmts(c.DownStmts),
 	}
+}
 
-	Down struct {
-		XMLName xml.Name `xml:"Down"`
+type RawSQLStmts struct {
+	Stmts []*Stmt `xml:"Stmt"`
+}
 
-		Stmts []*Stmt `xml:"Stmt"`
+func TransformSQLStmts(stmts []*refactor.Stmt) *RawSQLStmts {
+	result := &RawSQLStmts{}
+	for _, stmt := range stmts {
+		result.Stmts = append(
+			result.Stmts,
+			&Stmt{
+				Raw: stmt.Raw,
+			},
+		)
 	}
+	return result
 }
