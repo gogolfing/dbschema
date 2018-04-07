@@ -62,10 +62,6 @@ func (d *DBSchema) Close() error {
 	return d.db.Close()
 }
 
-func (d *DBSchema) Expand(expr string) (value string, err error) {
-	return dialect.Expand(expr, d.changeLog.Variables, d.Dialect)
-}
-
 func (d *DBSchema) executeNewTxWork(work func(QueryExecer) error) error {
 	tx, err := d.db.Begin()
 	if err != nil {
@@ -188,7 +184,7 @@ func (d *DBSchema) ensureAppliedChangeSets(fix bool, visitor func(acs *AppliedCh
 
 func (d *DBSchema) insertIntoChangeLogTable(e Execer, changeSet *refactor.ChangeSet, order int) error {
 	now := time.Now().UTC()
-	hash, err := changeSet.Sha256Sum()
+	hash, err := RefactorChangeSetSha256Sum(changeSet)
 	if err != nil {
 		return err
 	}

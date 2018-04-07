@@ -9,5 +9,5 @@ import (
 const DefaultTimeFormat = time.RFC1123Z
 
 func collectingAppliedChangeSets(w io.Writer) {
-	fmt.Fprintln(w, "Collecting applied ChangeSets...\n")
+	fmt.Fprintln(w, "Collecting applied ChangeSets...")
 }

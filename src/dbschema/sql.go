@@ -4,6 +4,11 @@ import (
 	"database/sql"
 
 	"github.com/gogolfing/dbschema/src/dialect"
+	"github.com/gogolfing/dbschema/src/dialect/postgresql"
+)
+
+var (
+	DriverPostgresql = "postgresql"
 )
 
 type sqlDB struct {
@@ -12,7 +17,7 @@ type sqlDB struct {
 
 func openSqlDB(d dialect.Dialect, conn string) (DB, error) {
 	dbmsToDriver := map[string]string{
-		dialect.Postgresql: "postgres",
+		postgresql.DBMS: DriverPostgresql,
 	}
 	driverName, ok := dbmsToDriver[d.DBMS()]
 	if !ok {

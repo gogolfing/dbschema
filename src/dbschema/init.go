@@ -18,8 +18,9 @@ const (
 const DefaultLockId = "LOCK"
 
 func (d *DBSchema) init() error {
+	refCtx := d.initialRefactorContext()
 	expanded, err := refactor.ExpandAll(
-		d,
+		refCtx,
 		d.changeLog.TableName.DefaultExpander(DefaultChangeLogTableName),
 		d.changeLog.LockTableName.DefaultExpander(DefaultChangeLogLockTableName),
 	)

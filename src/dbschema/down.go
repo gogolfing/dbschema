@@ -18,13 +18,14 @@ func (d *DBSchema) Down(logger logger.Logger, count int) error {
 		return err
 	}
 
+	refCtx := d.initialRefactorContext()
 	changeSets := d.changeLog.ChangeSets[:len(appliedSets)]
 
 	work := func(qe QueryExecer) error {
 		for i := len(changeSets) - 1; i >= 0; i-- {
 			changeSet := changeSets[i]
 
-			stmts, err := refactor.CollectChangersDown(d, changeSet.Changers...)
+			stmts, err := refactor.CollectChangersDown(refCtx, changeSet.Changers...)
 			if err != nil {
 				return err
 			}
