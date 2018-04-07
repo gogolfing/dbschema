@@ -1,26 +1,40 @@
-package dialect
+package postgresql
 
-import "fmt"
+import (
+	"fmt"
 
-const Postgresql = "postgresql"
+	"github.com/gogolfing/dbschema/src/dialect"
+)
 
-const PostgresqlDefaultPort = 5432
+const DBMS = "postgresql"
 
-func NewDialectPostgresql() Dialect {
-	return &DialectStruct{
-		DBMSValue: Postgresql,
+const DefaultPort = 5432
 
+func Dialect() dialect.Dialect {
+	return &dialect.DialectStruct{
+		DBMSValue: DBMS,
+		Syntax:    Syntax(),
+		Types:     Types(),
+	}
+}
+
+func Syntax() dialect.Syntax {
+	return &dialect.SyntaxStruct{
 		QuoteRefValue:   `"`,
 		QuoteConstValue: `'`,
 
-		Escapes: newPostgresqlEscapes(),
+		Escapes: newEscapes(),
 
-		Caster: DoubleColonCaster,
+		Caster: dialect.DoubleColonCaster,
 
 		PlaceholderValue: func(num int) string { return fmt.Sprintf("$%v", num+1) },
+	}
+}
 
+func Types() dialect.Types {
+	return &dialect.TypesStruct{
 		IntegerValue: "INTEGER",
-		Int8Value:    "SMALLINT", //this is the same as the Int16Value because Int8 is not implemented. users may override elsewhere.
+		Int8Value:    "SMALLINT", //This is the same as the Int16Value because Int8 is not implemented. Users may override elsewhere.
 		Int16Value:   "SMALLINT",
 		Int32Value:   "INTEGER",
 		Int64Value:   "BIGINT",
@@ -42,6 +56,8 @@ func NewDialectPostgresql() Dialect {
 
 		TextValue: "TEXT",
 
+		ByteArrayValue: "BYTEA",
+
 		TimestampValue:   "TIMESTAMP",
 		TimestampTzValue: "TIMESTAMP WITH TIME ZONE",
 		TimeValue:        "TIME",
@@ -54,8 +70,8 @@ func NewDialectPostgresql() Dialect {
 	}
 }
 
-func newPostgresqlEscapes() map[string]string {
-	escapes := NewDefaultEscapes()
+func newEscapes() map[string]string {
+	escapes := dialect.NewDefaultEscapes()
 	escapes[`'`] = `\'`
 	return escapes
 }

@@ -266,3 +266,70 @@ func formatTags(tags []string) (string, bool) {
 	w.Flush()
 	return buffer.String(), true
 }
+
+/*
+func CallVariableMethodOnDialect(d Dialect, name string) (value string, err error) {
+	v := reflect.ValueOf(d)
+	method := v.MethodByName(name)
+	if method.Kind() == reflect.Invalid {
+		return "", ErrMethodDoesNotExist
+	}
+	if !isMethodIsOfVariableType(method) {
+		return "", ErrInvalidVariableMethodType
+	}
+	out := method.Call([]reflect.Value{})
+	value = out[0].Interface().(string)
+	err, _ = out[1].Interface().(error)
+	return
+}
+
+func isMethodIsOfVariableType(method reflect.Value) bool {
+	t := method.Type()
+	if t.NumIn() != 0 {
+		return false
+	}
+	if t.NumOut() != 2 {
+		return false
+	}
+	if t.Out(0).Kind() != reflect.String {
+		return false
+	}
+	if out := t.Out(1); out.Kind() != reflect.Interface || out.String() != "error" {
+		return false
+	}
+	return true
+}
+
+func TestCallVariableMethodOnDialect(t *testing.T) {
+	d := &DialectStruct{
+		IntegerValue: "int",
+		BoolValue:    "boolean",
+	}
+
+	tests := []struct {
+		name      string
+		result    string
+		resultErr error
+	}{
+		{"doesNotExist", "", ErrMethodDoesNotExist},
+		{"QuoteRef", "", ErrInvalidVariableMethodType},
+		{"UUID", "", ErrNotSupported},
+		{"Integer", "int", nil},
+		{"Bool", "boolean", nil},
+	}
+	for _, test := range tests {
+		result, resultErr := CallVariableMethodOnDialect(d, test.name)
+		if result != test.result || !reflect.DeepEqual(resultErr, test.resultErr) {
+			t.Errorf(
+				"CallVariableMethodOnDialect(%v, %v) = %v, %v WANT %v, %v",
+				d,
+				test.name,
+				result,
+				resultErr,
+				test.result,
+				test.resultErr,
+			)
+		}
+	}
+}
+*/
