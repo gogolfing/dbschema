@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/gogolfing/dbschema/src/dialect"
+	"github.com/gogolfing/dbschema/src/dialect/mysql"
 	"github.com/gogolfing/dbschema/src/dialect/postgresql"
 )
 
@@ -19,6 +20,9 @@ func NewDialect(dbms string) (dialect.Dialect, error) {
 	switch dbms {
 	case postgresql.DBMS:
 		result = postgresql.Dialect()
+
+	case mysql.DBMS:
+		result = mysql.Dialect()
 	}
 
 	if result == nil {

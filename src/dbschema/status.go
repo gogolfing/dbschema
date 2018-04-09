@@ -2,11 +2,13 @@ package dbschema
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/gogolfing/dbschema/src/logger"
 )
 
 func (d *DBSchema) Status(logger logger.Logger) error {
+	log.Println("starting status")
 	collectingAppliedChangeSets(logger.Verbose())
 
 	empty := true

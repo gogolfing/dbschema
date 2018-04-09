@@ -2,6 +2,7 @@ package dbschema
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/user"
 	"strings"
@@ -30,21 +31,25 @@ func (d *DBSchema) init() error {
 	d.tableName, d.lockTableName = expanded[0], expanded[1]
 
 	if err := d.initTables(); err != nil {
+		log.Println("d.initTables()", "err", err)
 		return err
 	}
 	if err := d.initLock(); err != nil {
 		return err
 	}
+	log.Println("END OF init()")
 	return nil
 }
 
 func (d *DBSchema) initTables() error {
+	log.Println("initing tables")
 	changeLogTable := createChangeLogTable(d.tableName)
 	changeLogLockTable := createChangeLogLockTable(d.lockTableName)
 	stmts := []*refactor.Stmt{
 		changeLogTable,
 		changeLogLockTable,
 	}
+	log.Println("stms", stmts[0], stmts[1])
 
 	return d.executeNewTxWork(func(qe QueryExecer) error {
 		return executeStmts(qe, stmts)
