@@ -12,6 +12,7 @@ import (
 	"github.com/gogolfing/dbschema/src/dialect"
 	"github.com/gogolfing/dbschema/src/logger"
 	"github.com/gogolfing/dbschema/src/refactor"
+	"github.com/gogolfing/dbschema/src/refactor/dto"
 )
 
 type key int
@@ -43,6 +44,7 @@ func Run(args []string) error {
 		os.Stdout,
 		os.Stderr,
 	)
+	fmt.Fprintln(os.Stderr, "sc.ExecuteContext()", "err", err)
 	if subcommand.IsExecutionError(err) {
 		fmt.Fprintln(os.Stderr, err)
 	}
@@ -138,11 +140,16 @@ func createDialect(dbms string) (dialect.Dialect, error) {
 	if dbms == "" {
 		return nil, fmt.Errorf("dbschema: value for dbms cannot be empty. please set the %s environment variable or the -dbms flag", ENV_VAR_DBMS)
 	}
-	return dialect.NewDialect(dbms)
+	return NewDialect(dbms)
 }
 
 func createChangeLog(path string) (*refactor.ChangeLog, error) {
-	return refactor.NewChangeLogFile(path)
+	dtoCl, err := dto.UnmarshalChangeLogXMLPath(path)
+	if err != nil {
+		return nil, err
+	}
+
+	return dtoCl.RefactorType(), nil
 }
 
 func createDBSchema(d dialect.Dialect, conn string, cl *refactor.ChangeLog) (*dbschema.DBSchema, error) {

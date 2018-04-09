@@ -21,6 +21,13 @@ func TransformRawSQL(c *refactor.RawSQL) *RawSQL {
 	}
 }
 
+func (r *RawSQL) RefactorType() refactor.Changer {
+	return &refactor.RawSQL{
+		UpStmts:   r.Up.RefactorType(),
+		DownStmts: r.Down.RefactorType(),
+	}
+}
+
 type RawSQLStmts struct {
 	Stmts []*Stmt `xml:"Stmt"`
 }
@@ -34,6 +41,14 @@ func TransformSQLStmts(stmts []*refactor.Stmt) *RawSQLStmts {
 				Raw: stmt.Raw,
 			},
 		)
+	}
+	return result
+}
+
+func (r *RawSQLStmts) RefactorType() []*refactor.Stmt {
+	result := make([]*refactor.Stmt, len(r.Stmts))
+	for i, stmt := range r.Stmts {
+		result[i] = stmt.RefactorType()
 	}
 	return result
 }

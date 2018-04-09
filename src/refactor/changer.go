@@ -1,5 +1,7 @@
 package refactor
 
+import "log"
+
 //Changer is the interface that wraps the Up and Down methods.
 //
 //The Up and Down methods should be thought of as opposites that offset eachother.
@@ -15,12 +17,15 @@ type Changer interface {
 }
 
 func CollectChangersUp(ctx Context, changers ...Changer) ([]*Stmt, error) {
+	log.Println("CollectChangersUp", len(changers))
 	result := []*Stmt{}
 	for _, changer := range changers {
+		log.Println("CollectChangersUp", "changer", changer)
 		stmts, err := changer.Up(ctx)
 		if err != nil {
 			return nil, err
 		}
+		log.Println("CollectChangersUp", stmts)
 		result = append(result, stmts...)
 	}
 	return result, nil

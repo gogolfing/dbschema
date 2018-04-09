@@ -3,6 +3,7 @@ package dto
 import (
 	"encoding/xml"
 	"io"
+	"log"
 	"os"
 
 	"github.com/gogolfing/dbschema/src/refactor"
@@ -54,15 +55,18 @@ func newChangeSet() *ChangeSet {
 
 func (cs *ChangeSet) RefactorType() *refactor.ChangeSet {
 	return &refactor.ChangeSet{
-		Id:       cs.Id,
-		Name:     refactor.NewNullString(cs.Name),
-		Author:   refactor.NewNullString(cs.Author),
+		Id:     cs.Id,
+		Name:   refactor.NewNullString(cs.Name),
+		Author: refactor.NewNullString(cs.Author),
+		//TODO actually implement tags
 		Tags:     nil,
-		Changers: nil,
+		Changers: Changers(cs.Changers).RefactorType(),
 	}
 }
 
 func (c *ChangeSet) UnmarshalXML(dec *xml.Decoder, start xml.StartElement) error {
+	log.Println("ChangeSet.UnmarshalXML()")
+
 	c.XMLName = start.Name
 
 	for _, attr := range start.Attr {
@@ -81,6 +85,7 @@ func (c *ChangeSet) UnmarshalXML(dec *xml.Decoder, start xml.StartElement) error
 		return err
 	}
 	c.Changers = changers
+	log.Println("ChangeSet.UnmarshalXML()", "c.Changers", c.Changers, len(c.Changers))
 
 	return nil
 }
@@ -102,6 +107,7 @@ func decodeInnerChangers(dec *xml.Decoder, start xml.StartElement) ([]Changer, e
 		if err != nil {
 			return nil, err
 		}
+		log.Printf("decodeInnerChanger result %T %v", changer, changer)
 		if changer != nil {
 			result = append(result, changer)
 		}
@@ -111,6 +117,8 @@ func decodeInnerChangers(dec *xml.Decoder, start xml.StartElement) ([]Changer, e
 
 func decodeInnerChanger(dec *xml.Decoder, start xml.StartElement) (Changer, error) {
 	var changer Changer
+
+	log.Println("decodeInnerChanger", start.Name.Local)
 
 	switch start.Name.Local {
 	case "RawSQL":

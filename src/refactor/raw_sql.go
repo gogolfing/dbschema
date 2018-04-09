@@ -1,5 +1,7 @@
 package refactor
 
+import "log"
+
 //RawSQL is a Changer that provides raw string sql statements with support for
 //expansion of those raw input values.
 type RawSQL struct {
@@ -13,7 +15,8 @@ type RawSQL struct {
 //Up is the Changer implementation.
 //It returns the expanded versions of r.UpStmts.
 func (r *RawSQL) Up(ctx Context) ([]*Stmt, error) {
-	result := make([]*Stmt, 0, len(r.UpStmts))
+	log.Println("RawSQL.Up()", r.UpStmts)
+	result := make([]*Stmt, len(r.UpStmts))
 	for i, upStmt := range r.UpStmts {
 		expanded, err := ctx.Expand(upStmt.Raw)
 		if err != nil {
@@ -27,7 +30,7 @@ func (r *RawSQL) Up(ctx Context) ([]*Stmt, error) {
 //Down is the Changer implementation.
 //It returns the expanded versions of r.DownStmts.
 func (r *RawSQL) Down(ctx Context) ([]*Stmt, error) {
-	result := make([]*Stmt, 0, len(r.DownStmts))
+	result := make([]*Stmt, len(r.DownStmts))
 	for i, downStmt := range r.DownStmts {
 		expanded, err := ctx.Expand(downStmt.Raw)
 		if err != nil {
